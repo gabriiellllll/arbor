@@ -103,6 +103,7 @@ final class CanvasControllerTests: XCTestCase {
         XCTAssertTrue(controller.canCompareSelection)
         controller.compareSelection()
         let compare = try XCTUnwrap(controller.compare)
+        XCTAssertTrue(try controller.tree.children(of: XCTUnwrap(panel(named: "Root")).id).isEmpty, "branches replaced")
         let left = try XCTUnwrap(controller.panels[compare.left])
         let right = try XCTUnwrap(controller.panels[compare.right])
         waitUntil("compared folders load") { left.items.count == 2 && right.items.count == 1 }
