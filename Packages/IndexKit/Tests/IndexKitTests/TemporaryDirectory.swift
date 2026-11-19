@@ -1,4 +1,5 @@
 import Foundation
+import IndexKit
 
 /// A uniquely named directory under the system temporary directory, deleted on `remove()`.
 /// Tests never touch anything outside it.
@@ -6,10 +7,10 @@ struct TemporaryDirectory {
     let url: URL
 
     init() throws {
-        url = FileManager.default.temporaryDirectory
+        let created = FileManager.default.temporaryDirectory
             .appendingPathComponent("IndexKitTests-\(UUID().uuidString)", isDirectory: true)
-            .resolvingSymlinksInPath()
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: created, withIntermediateDirectories: true)
+        url = URL(fileURLWithPath: FolderWatcher.canonicalPath(of: created), isDirectory: true)
     }
 
     @discardableResult
