@@ -51,6 +51,9 @@
     "Close Panel" : {
 
     },
+    "Compare Side by Side" : {
+
+    },
     "Continue in Limited Mode" : {
 
     },
@@ -90,10 +93,16 @@
     "Kind" : {
 
     },
+    "Layout" : {
+
+    },
     "Limited mode: without Full Disk Access, some folders can’t be read." : {
 
     },
     "List" : {
+
+    },
+    "Manual" : {
 
     },
     "Minimize" : {
@@ -106,6 +115,9 @@
 
     },
     "No Selection" : {
+
+    },
+    "Only in %@" : {
 
     },
     "Open" : {
@@ -141,10 +153,19 @@
     "Size" : {
 
     },
+    "Star" : {
+
+    },
     "This folder can’t be read: %@" : {
 
     },
     "This folder no longer exists." : {
+
+    },
+    "Tree Downward" : {
+
+    },
+    "Tree to the Right" : {
 
     },
     "Turn on Arbor (click + to add it if it is not listed)." : {
