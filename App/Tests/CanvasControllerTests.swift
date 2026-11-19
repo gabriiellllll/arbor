@@ -8,6 +8,8 @@ import XCTest
 final class CanvasControllerTests: XCTestCase {
     private var root: URL!
     private var controller: CanvasViewController!
+    private var defaults: UserDefaults!
+    private let suite = "CanvasControllerTests"
 
     override func setUp() async throws {
         root = FileManager.default.temporaryDirectory
@@ -18,7 +20,9 @@ final class CanvasControllerTests: XCTestCase {
             )
         }
         try Data().write(to: root.appendingPathComponent("notes.txt"))
-        controller = CanvasViewController()
+        defaults = UserDefaults(suiteName: suite)
+        defaults.removePersistentDomain(forName: suite)
+        controller = CanvasViewController(defaults: defaults)
         controller.loadView()
         controller.view.frame = CGRect(x: 0, y: 0, width: 1200, height: 800)
         controller.layout = .treeRight
@@ -26,6 +30,7 @@ final class CanvasControllerTests: XCTestCase {
 
     override func tearDown() async throws {
         controller = nil
+        defaults.removePersistentDomain(forName: suite)
         try? FileManager.default.removeItem(at: root.deletingLastPathComponent())
     }
 
@@ -55,6 +60,12 @@ final class CanvasControllerTests: XCTestCase {
         waitUntil("layout settles") { !controller.animator.isAnimating }
         XCTAssertGreaterThan(alpha.panel.panelView.frame.minX, rootPanel.panelView.frame.maxX)
         XCTAssertEqual(controller.tree[alpha.id]?.sourceKey, "Alpha")
+    }
+
+    func testLayoutChoiceIsSavedInTheGivenDefaults() {
+        controller.layout = .star
+        XCTAssertEqual(defaults.string(forKey: CanvasViewController.layoutDefaultsKey), "star")
+        XCTAssertEqual(CanvasViewController(defaults: defaults).layout, .star)
     }
 
     func testSwitchingToTreeDownMovesChildrenBelow() throws {
@@ -98,9 +109,12 @@ final class CanvasControllerTests: XCTestCase {
 
     func testComparisonMirrorsSelectionAndMarksOneSidedItems() throws {
         let rootPanel = try XCTUnwrap(openRootAndWait())
+        try controller.activate(XCTUnwrap(panel(named: "Root")).id, reveal: false)
         rootPanel.select(names: ["Alpha", "Beta"])
-        controller.activePanel = panel(named: "Root")?.id
-        XCTAssertTrue(controller.canCompareSelection)
+        waitUntil("both branches load") {
+            panel(named: "Alpha")?.panel.items.count == 2 && panel(named: "Beta")?.panel.items.count == 1
+        }
+        XCTAssertTrue(controller.canCompareSelection, "loading child panels must not steal the active panel")
         controller.compareSelection()
         let compare = try XCTUnwrap(controller.compare)
         XCTAssertTrue(try controller.tree.children(of: XCTUnwrap(panel(named: "Root")).id).isEmpty, "branches replaced")
@@ -124,8 +138,8 @@ final class CanvasControllerTests: XCTestCase {
 
     func testClosingAComparedRootEndsTheComparison() throws {
         let rootPanel = try XCTUnwrap(openRootAndWait())
+        try controller.activate(XCTUnwrap(panel(named: "Root")).id, reveal: false)
         rootPanel.select(names: ["Alpha", "Beta"])
-        controller.activePanel = panel(named: "Root")?.id
         controller.compareSelection()
         let compare = try XCTUnwrap(controller.compare)
         controller.endComparison()
