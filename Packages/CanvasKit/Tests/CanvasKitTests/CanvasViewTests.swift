@@ -33,6 +33,15 @@ final class CanvasViewTests: XCTestCase {
         XCTAssertEqual(canvas.magnification, Zoom.maximum, accuracy: 0.001)
     }
 
+    func testRepeatedAnimatedZoomKeepsStepping() {
+        for _ in 0 ..< 4 {
+            canvas.zoomOut()
+        }
+        XCTAssertEqual(canvas.targetMagnification, 0.5, accuracy: 0.001)
+        canvas.zoomIn()
+        XCTAssertEqual(canvas.targetMagnification, 0.67, accuracy: 0.001)
+    }
+
     func testRevealScrollsToTarget() {
         let target = CGRect(x: 5000, y: 3000, width: 300, height: 200)
         canvas.reveal(target, animated: false)
