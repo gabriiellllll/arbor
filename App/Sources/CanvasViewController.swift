@@ -4,10 +4,13 @@ import IndexKit
 import SwiftUI
 
 /// Owns the canvas and its folder panels. Selecting folders in a panel opens them as child
-/// panels linked by branches; selecting something else replaces those branches.
+/// panels linked by branches; selecting something else replaces those branches. Panels are
+/// arranged by the current layout (see `CanvasViewController+Layout`), and two folders can be
+/// compared side by side (see `CanvasViewController+Compare`).
 @MainActor
 final class CanvasViewController: NSViewController {
     static let panelSize = CGSize(width: 380, height: 420)
+    static let layoutDefaultsKey = "canvasLayout"
 
     let canvasView = CanvasView()
 
@@ -15,9 +18,26 @@ final class CanvasViewController: NSViewController {
     var onInspectedItemChange: ((FolderItem?) -> Void)?
     var onViewportChange: (() -> Void)?
 
-    private var tree = PanelTree<URL>()
-    private var panels: [PanelID: FolderPanelController] = [:]
-    private var activePanel: PanelID? {
+    var layout: CanvasLayout = UserDefaults.standard.string(forKey: layoutDefaultsKey)
+        .flatMap(CanvasLayout.init(rawValue:)) ?? .treeRight
+    {
+        didSet { layoutDidChange(from: oldValue) }
+    }
+
+    var tree = PanelTree<URL>()
+    var panels: [PanelID: FolderPanelController] = [:]
+    /// Palette index of each root; descendants use their root's color.
+    var rootColors: [PanelID: Int] = [:]
+    var compare: CompareSession?
+    /// Positions of the manual layout, restored when switching back to it.
+    var manualFrames: [PanelID: CGRect] = [:]
+    /// Set while a layout switch keeps the current positions instead of restoring saved ones.
+    var keepsFramesOnManualSwitch = false
+    /// Set while mirroring a selection to the compared panel, so it is not mirrored back.
+    var isMirroringSelection = false
+    let animator = FrameAnimator()
+
+    var activePanel: PanelID? {
         didSet {
             for (id, panel) in panels {
                 panel.panelView.isActive = id == activePanel
@@ -64,14 +84,22 @@ final class CanvasViewController: NSViewController {
 
     // MARK: - Opening
 
-    /// Opens `url` as a root panel, or reveals it if it is already open as a root.
-    func openRoot(_ url: URL) {
+    /// Opens `url` as a root panel in `colorIndex` (or the least used color), or reveals it if
+    /// it is already open as a root.
+    func openRoot(_ url: URL, colorIndex: Int? = nil) {
         if let existing = tree.roots
-            .first(where: { tree[$0]?.content.standardizedFileURL == url.standardizedFileURL })
+            .first(where: { tree[$0]?.content.standardizedFileURL == url.standardizedFileURL && !isCompared($0) })
         {
             activate(existing, reveal: true)
             return
         }
+        let id = addRoot(url, colorIndex: colorIndex)
+        activate(id, reveal: layout == .manual)
+        applyLayout(revealing: id)
+    }
+
+    /// Adds a root panel near the top-left of the visible area.
+    func addRoot(_ url: URL, colorIndex: Int?) -> PanelID {
         let visible = canvasView.visibleCanvasRect
         let origin = CGPoint(
             x: visible.minX + 40 / canvasView.magnification,
@@ -79,25 +107,27 @@ final class CanvasViewController: NSViewController {
         )
         let frame = PanelPlacement.frame(at: origin, size: Self.panelSize, avoiding: tree.panels.values.map(\.frame))
         let id = tree.addRoot(content: url, frame: frame)
+        rootColors[id] = colorIndex ?? BranchPalette.nextIndex(used: Array(rootColors.values))
         addPanel(id, url: url, frame: frame)
-        activate(id, reveal: true)
+        return id
     }
 
     private func addPanel(_ id: PanelID, url: URL, frame: CGRect) {
         let panel = FolderPanelController(url: url, frame: frame)
+        panel.tint = color(of: id)
         panel.onSelectionChange = { [weak self] items in self?.selectionChanged(in: id, to: items) }
         panel.onRowsMoved = { [weak self] in self?.updateBranches() }
         panel.onClose = { [weak self] in self?.closePanel(id) }
         panel.panelView.onActivate = { [weak self] in self?.activate(id, reveal: false) }
-        panel.panelView.onFrameChanging = { [weak self] in self?.panelMoved(id) }
-        panel.panelView.onFrameChanged = { [weak self] in self?.panelMoved(id) }
+        panel.panelView.onFrameChanging = { [weak self] in self?.panelDragged(id) }
+        panel.panelView.onFrameChanged = { [weak self] in self?.panelDragEnded(id) }
         panels[id] = panel
         canvasView.documentView.addSubview(panel.panelView)
         panel.reload()
         updateWatchedFolders()
     }
 
-    private func activate(_ id: PanelID, reveal: Bool) {
+    func activate(_ id: PanelID, reveal: Bool) {
         activePanel = id
         guard let panel = panels[id] else { return }
         onInspectedItemChange?(panel.selectedItems.count == 1 ? panel.selectedItems.first : nil)
@@ -106,11 +136,19 @@ final class CanvasViewController: NSViewController {
         }
     }
 
+    func color(of id: PanelID) -> NSColor {
+        BranchPalette.color(at: tree.chain(to: id).first.flatMap { rootColors[$0] } ?? 0)
+    }
+
     // MARK: - Selection → child panels
 
     private func selectionChanged(in id: PanelID, to items: [FolderItem]) {
         guard let parent = panels[id] else { return }
-        let folders = items.filter(\.isFolder)
+        var folders = items.filter(\.isFolder)
+        if isCompared(id) {
+            // ponytail: compared folders are followed one path at a time; trees would need a compare-tree layout.
+            folders = Array(folders.prefix(1))
+        }
         var occupied = tree.panels.values.map(\.frame)
         let result = tree.syncChildren(of: id, to: folders.map { ($0.name, $0.url) }) { parentPanel, key in
             let sourceY = parent.branchSourceY(forName: key) ?? parentPanel.frame.minY
@@ -120,22 +158,22 @@ final class CanvasViewController: NSViewController {
             occupied.append(frame)
             return frame
         }
-        for removed in result.removed {
-            panels.removeValue(forKey: removed)?.panelView.removeFromSuperview()
-        }
+        removePanels(result.removed)
         for added in result.added {
             if let panel = tree[added] {
                 addPanel(added, url: panel.content, frame: panel.frame)
             }
         }
-        if !result.removed.isEmpty {
-            updateWatchedFolders()
-        }
-        updateBranches()
         activePanel = id
         onInspectedItemChange?(items.count == 1 ? items.first : nil)
-        if let last = result.added.last, let frame = tree[last]?.frame {
-            canvasView.reveal(frame, context: parent.panelView.frame)
+        if isCompared(id) {
+            mirrorSelection(from: id, names: Set(folders.map(\.name)))
+            updateComparisonMarks()
+        }
+        if result.added.isEmpty, result.removed.isEmpty {
+            updateBranches()
+        } else {
+            applyLayout(revealing: result.added.last)
         }
     }
 
@@ -146,31 +184,33 @@ final class CanvasViewController: NSViewController {
             parent.deselect(key)
             return
         }
-        for removed in tree.remove(id) {
-            panels.removeValue(forKey: removed)?.panelView.removeFromSuperview()
+        if let compare, compare.contains(root: id) {
+            endComparison()
+            return
+        }
+        rootColors[id] = nil
+        removePanels(tree.remove(id))
+        applyLayout(revealing: nil)
+    }
+
+    func removePanels(_ ids: [PanelID]) {
+        guard !ids.isEmpty else { return }
+        for id in ids {
+            panels.removeValue(forKey: id)?.panelView.removeFromSuperview()
+            manualFrames[id] = nil
         }
         updateWatchedFolders()
-        updateBranches()
     }
 
-    // MARK: - Geometry
+    // MARK: - Branches
 
-    private func panelMoved(_ id: PanelID) {
-        guard let frame = panels[id]?.panelView.frame else { return }
-        tree.setFrame(frame, for: id)
-        updateBranches()
-    }
-
-    private func updateBranches() {
+    func updateBranches() {
         var branches: [PanelID: (curve: BranchCurve, color: NSColor)] = [:]
         for panel in tree.panels.values {
             guard let parentID = panel.parent, let parent = tree[parentID], let key = panel.sourceKey,
                   let sourceY = panels[parentID]?.branchSourceY(forName: key) else { continue }
-            let curve = BranchCurve(
-                from: CGPoint(x: parent.frame.maxX, y: sourceY),
-                to: CGPoint(x: panel.frame.minX, y: panel.frame.minY + PanelPlacement.titleOffset)
-            )
-            branches[panel.id] = (curve, .controlAccentColor)
+            let curve = BranchAnchors.curve(parent: parent.frame, sourceY: sourceY, child: panel.frame)
+            branches[panel.id] = (curve, color(of: panel.id))
         }
         canvasView.branchesView.setBranches(branches)
     }
