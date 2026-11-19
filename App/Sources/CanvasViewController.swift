@@ -7,7 +7,7 @@ import SwiftUI
 /// panels linked by branches; selecting something else replaces those branches.
 @MainActor
 final class CanvasViewController: NSViewController {
-    static let panelSize = CGSize(width: 420, height: 440)
+    static let panelSize = CGSize(width: 380, height: 420)
 
     let canvasView = CanvasView()
 
@@ -135,7 +135,7 @@ final class CanvasViewController: NSViewController {
         activePanel = id
         onInspectedItemChange?(items.count == 1 ? items.first : nil)
         if let last = result.added.last, let frame = tree[last]?.frame {
-            canvasView.reveal(frame)
+            canvasView.reveal(frame, context: parent.panelView.frame)
         }
     }
 
