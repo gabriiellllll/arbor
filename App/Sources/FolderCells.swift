@@ -35,16 +35,42 @@ enum FolderCells {
     }
 }
 
-/// An icon and a name, highlighted when selected.
+/// Highlights a selected row in the branch color.
+@MainActor
+final class TintedRowView: NSTableRowView {
+    private let tint: NSColor
+
+    init(tint: NSColor) {
+        self.tint = tint
+        super.init(frame: .zero)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    override func drawSelection(in _: NSRect) {
+        (isEmphasized ? tint : tint.withAlphaComponent(0.35)).setFill()
+        NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 1), xRadius: 5, yRadius: 5).fill()
+    }
+}
+
+/// An icon and a name, highlighted in the branch color when selected.
 @MainActor
 final class IconItem: NSCollectionViewItem {
     static let identifier = NSUserInterfaceItemIdentifier("IconItem")
 
+    var tint: NSColor = .controlAccentColor {
+        didSet { updateHighlight() }
+    }
+
     override var isSelected: Bool {
-        didSet {
-            view.layer?.backgroundColor = isSelected ? NSColor.selectedContentBackgroundColor.withAlphaComponent(0.3)
-                .cgColor : nil
-        }
+        didSet { updateHighlight() }
+    }
+
+    private func updateHighlight() {
+        view.layer?.backgroundColor = isSelected ? tint.withAlphaComponent(0.3).cgColor : nil
     }
 
     override func loadView() {

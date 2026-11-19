@@ -12,7 +12,25 @@ final class FolderPanelController: NSObject {
     let url: URL
     /// Path as FSEvents reports it, to match change notifications.
     let canonicalPath: String
+    let title: String
     let panelView: PanelView
+
+    /// Branch color: highlights selected rows.
+    var tint: NSColor = .controlAccentColor {
+        didSet {
+            tableView.enumerateAvailableRowViews { rowView, _ in rowView.needsDisplay = true }
+            collectionView.reloadData()
+        }
+    }
+
+    /// When compared: the item names of the counterpart folder. Items missing there are marked.
+    var counterpartNames: Set<String>? {
+        didSet {
+            if counterpartNames != oldValue {
+                tableView.reloadData(forRowIndexes: IndexSet(items.indices), columnIndexes: [0])
+            }
+        }
+    }
 
     private(set) var items: [FolderItem] = []
 
@@ -37,8 +55,9 @@ final class FolderPanelController: NSObject {
         self.url = url
         canonicalPath = FolderWatcher.canonicalPath(of: url)
         panelView = PanelView(frame: frame)
-        super.init()
         let name = FileManager.default.displayName(atPath: url.path)
+        title = name
+        super.init()
         panelView.titleLabel.stringValue = name
         panelView.iconView.image = NSWorkspace.shared.icon(forFile: url.path)
         panelView.setAccessibilityElement(true)
@@ -118,6 +137,22 @@ final class FolderPanelController: NSObject {
         collectionView.selectionIndexPaths = Set(indexes.map { IndexPath(item: $0, section: 0) })
         onSelectionChange?(selectedItems)
         onRowsMoved?()
+    }
+
+    func rowIndex(forName name: String) -> Int? {
+        items.firstIndex { $0.name == name }
+    }
+
+    /// Selects exactly the items named in `names` (those present), reporting the change.
+    func select(names: Set<String>) {
+        let indexes = IndexSet(items.indices.filter { names.contains(items[$0].name) })
+        switch mode {
+        case .list:
+            tableView.selectRowIndexes(indexes, byExtendingSelection: false)
+        case .icons:
+            collectionView.selectionIndexPaths = Set(indexes.map { IndexPath(item: $0, section: 0) })
+            onSelectionChange?(selectedItems)
+        }
     }
 
     /// Deselects the item named `name`; the selection change closes its child panel.
@@ -277,6 +312,9 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
         case .name:
             cell.textField?.stringValue = item.name
             cell.imageView?.image = FileIcons.icon(for: item)
+            let onlyHere = counterpartNames.map { !$0.contains(item.name) } ?? false
+            cell.textField?.textColor = onlyHere ? .systemOrange : .labelColor
+            cell.toolTip = onlyHere ? String(localized: "Only in \(title)") : nil
         case .size:
             cell.textField?.stringValue = item.entry.kind == .directory
                 ? "--" : ByteCountFormatter.string(fromByteCount: item.entry.size, countStyle: .file)
@@ -284,6 +322,10 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
             cell.textField?.stringValue = item.entry.modified.formatted(date: .numeric, time: .shortened)
         }
         return cell
+    }
+
+    func tableView(_: NSTableView, rowViewForRow _: Int) -> NSTableRowView? {
+        TintedRowView(tint: tint)
     }
 
     func tableViewSelectionDidChange(_: Notification) {
@@ -317,6 +359,7 @@ extension FolderPanelController: NSCollectionViewDataSource, NSCollectionViewDel
             let item = items[indexPath.item]
             view.imageView?.image = FileIcons.icon(for: item)
             view.textField?.stringValue = item.name
+            view.tint = tint
         }
         return view
     }
