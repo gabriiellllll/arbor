@@ -11,10 +11,16 @@ public enum PanelPlacement {
     /// Right of the parent, title aligned with the source row, then pushed down until it
     /// overlaps nothing in `avoiding`.
     public static func childFrame(parent: CGRect, sourceY: CGFloat, size: CGSize, avoiding: [CGRect]) -> CGRect {
-        var frame = CGRect(
-            origin: CGPoint(x: parent.maxX + horizontalGap, y: sourceY - titleOffset),
-            size: size
+        frame(
+            at: CGPoint(x: parent.maxX + horizontalGap, y: sourceY - titleOffset),
+            size: size,
+            avoiding: avoiding
         )
+    }
+
+    /// At `origin`, pushed down until it overlaps nothing in `avoiding`.
+    public static func frame(at origin: CGPoint, size: CGSize, avoiding: [CGRect]) -> CGRect {
+        var frame = CGRect(origin: origin, size: size)
         while let blocker = avoiding.first(where: { $0.intersects(frame.insetBy(dx: 0, dy: -verticalGap / 2)) }) {
             frame.origin.y = blocker.maxY + verticalGap
         }

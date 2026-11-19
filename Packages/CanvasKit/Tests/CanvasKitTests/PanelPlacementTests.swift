@@ -32,4 +32,10 @@ final class PanelPlacementTests: XCTestCase {
             }
         }
     }
+
+    func testFrameAtOriginMovesBelowBlockers() {
+        let blocker = CGRect(x: 0, y: 0, width: 500, height: 300)
+        let frame = PanelPlacement.frame(at: CGPoint(x: 100, y: 100), size: size, avoiding: [blocker])
+        XCTAssertEqual(frame.origin, CGPoint(x: 100, y: 300 + PanelPlacement.verticalGap))
+    }
 }
