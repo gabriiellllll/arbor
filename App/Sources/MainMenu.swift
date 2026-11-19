@@ -76,6 +76,14 @@ extension MainMenu {
             withTitle: String(localized: "Hand Tool"), action: #selector(MainWindowController.toggleHandTool(_:)),
             keyEquivalent: ""
         )
+        let layout = NSMenuItem(title: String(localized: "Layout"), action: nil, keyEquivalent: "")
+        layout.submenu = layoutMenu()
+        menu.addItem(layout)
+        menu.addItem(
+            withTitle: String(localized: "Compare Side by Side"),
+            action: #selector(MainWindowController.compareSideBySide(_:)),
+            keyEquivalent: ""
+        )
         let background = NSMenuItem(title: String(localized: "Background"), action: nil, keyEquivalent: "")
         background.submenu = backgroundMenu()
         menu.addItem(background)
@@ -91,6 +99,23 @@ extension MainMenu {
             keyEquivalent: "i"
         )
         inspector.keyEquivalentModifierMask = [.command, .option]
+        return menu
+    }
+
+    /// One item per layout (⌘1 to ⌘4); the tag is the layout's index in `CanvasLayout.allCases`.
+    static func layoutMenu() -> NSMenu {
+        let titles = [
+            String(localized: "Tree to the Right"), String(localized: "Tree Downward"),
+            String(localized: "Star"), String(localized: "Manual"),
+        ]
+        let menu = NSMenu(title: String(localized: "Layout"))
+        for (index, title) in titles.enumerated() {
+            let item = menu.addItem(
+                withTitle: title, action: #selector(MainWindowController.setCanvasLayout(_:)),
+                keyEquivalent: "\(index + 1)"
+            )
+            item.tag = index
+        }
         return menu
     }
 
