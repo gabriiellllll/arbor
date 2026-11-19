@@ -13,8 +13,12 @@ public enum Reveal {
     }
 
     private static func axis(_ low: CGFloat, _ high: CGFloat, _ start: CGFloat, _ length: CGFloat) -> CGFloat {
-        if high - low > length || low < start { return low }
-        if high > start + length { return high - length }
+        if high - low > length || low < start {
+            return low
+        }
+        if high > start + length {
+            return high - length
+        }
         return start
     }
 }
