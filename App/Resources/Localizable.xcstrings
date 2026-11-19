@@ -27,54 +27,147 @@
     "About Arbor" : {
       "comment" : "App menu item"
     },
-    "Actual Size" : {},
+    "Actual Size" : {
+
+    },
     "Arbor" : {
       "comment" : "Main window title"
     },
-    "Arbor can’t read this folder. Grant Full Disk Access in System Settings to see it." : {},
-    "Background" : {},
+    "Arbor can’t read this folder. Grant Full Disk Access in System Settings to see it." : {
+
+    },
+    "Arbor had Full Disk Access before, but macOS no longer grants it. This can happen after an update signed with a new certificate or if the switch was turned off." : {
+
+    },
+    "Arbor reads folders and sizes across your disks. Without Full Disk Access, macOS hides some locations and Arbor works in a limited mode." : {
+
+    },
+    "Background" : {
+
+    },
     "Close" : {
       "comment" : "Window menu item"
     },
-    "Close Panel" : {},
-    "Created" : {},
-    "Crosses" : {},
-    "Dots" : {},
-    "File" : {},
-    "Grid" : {},
-    "Hand Tool" : {},
+    "Close Panel" : {
+
+    },
+    "Continue in Limited Mode" : {
+
+    },
+    "Created" : {
+
+    },
+    "Crosses" : {
+
+    },
+    "Dots" : {
+
+    },
+    "File" : {
+
+    },
+    "Full Disk Access Was Turned Off" : {
+
+    },
+    "Give Arbor Full Disk Access" : {
+
+    },
+    "Grant Access…" : {
+
+    },
+    "Grid" : {
+
+    },
+    "Hand Tool" : {
+
+    },
     "Hide Arbor" : {
       "comment" : "App menu item"
     },
-    "Icons" : {},
-    "Kind" : {},
-    "List" : {},
+    "Icons" : {
+
+    },
+    "Kind" : {
+
+    },
+    "Limited mode: without Full Disk Access, some folders can’t be read." : {
+
+    },
+    "List" : {
+
+    },
     "Minimize" : {
       "comment" : "Window menu item"
     },
-    "Modified" : {},
-    "Name" : {},
-    "No Selection" : {},
-    "Open" : {},
-    "Open Folder" : {},
-    "Open Folder…" : {},
-    "Plain" : {},
+    "Modified" : {
+
+    },
+    "Name" : {
+
+    },
+    "No Selection" : {
+
+    },
+    "Open" : {
+
+    },
+    "Open Folder" : {
+
+    },
+    "Open Folder…" : {
+
+    },
+    "Open System Settings" : {
+
+    },
+    "Open System Settings › Privacy & Security › Full Disk Access." : {
+
+    },
+    "Plain" : {
+
+    },
     "Quit Arbor" : {
       "comment" : "App menu item"
     },
-    "Show Inspector" : {},
-    "Show Sidebar" : {},
-    "Size" : {},
-    "This folder can’t be read: %@" : {},
-    "This folder no longer exists." : {},
-    "View" : {},
-    "Where" : {},
+    "Quit and reopen Arbor." : {
+
+    },
+    "Show Inspector" : {
+
+    },
+    "Show Sidebar" : {
+
+    },
+    "Size" : {
+
+    },
+    "This folder can’t be read: %@" : {
+
+    },
+    "This folder no longer exists." : {
+
+    },
+    "Turn on Arbor (click + to add it if it is not listed)." : {
+
+    },
+    "View" : {
+
+    },
+    "Where" : {
+
+    },
     "Window" : {
       "comment" : "Window menu title"
     },
-    "Zoom" : {},
-    "Zoom In" : {},
-    "Zoom Out" : {}
+    "Zoom" : {
+
+    },
+    "Zoom In" : {
+
+    },
+    "Zoom Out" : {
+
+    }
   },
   "version" : "1.0"
 }

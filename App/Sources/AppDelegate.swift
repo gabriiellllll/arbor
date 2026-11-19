@@ -27,6 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationDidBecomeActive(_: Notification) {
+        // UI tests run on a fixture folder and must not be blocked by the onboarding sheet.
+        windowController?.checkFullDiskAccess(showOnboarding: !UITestFixture.isActive)
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
         true
     }
