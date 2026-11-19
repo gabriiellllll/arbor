@@ -1,0 +1,77 @@
+name: Arbor
+options:
+  bundleIdPrefix: app.arbor
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
+packages:
+  CanvasKit: { path: Packages/CanvasKit }
+  IndexKit: { path: Packages/IndexKit }
+  FileOpsKit: { path: Packages/FileOpsKit }
+  DiskKit: { path: Packages/DiskKit }
+  PreviewKit: { path: Packages/PreviewKit }
+  BackupKit: { path: Packages/BackupKit }
+targets:
+  Arbor:
+    type: application
+    platform: macOS
+    sources:
+      - App/Sources
+      - App/Resources
+    dependencies:
+      - package: CanvasKit
+      - package: IndexKit
+      - package: FileOpsKit
+      - package: DiskKit
+      - package: PreviewKit
+      - package: BackupKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.arbor.Arbor
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        INFOPLIST_KEY_CFBundleDisplayName: Arbor
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 The Arbor Authors. MIT License."
+  ArborTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [App/Tests]
+    dependencies:
+      - target: Arbor
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Arbor.app/Contents/MacOS/Arbor"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  ArborUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [App/UITests]
+    dependencies:
+      - target: Arbor
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Arbor
+schemes:
+  Arbor:
+    build:
+      targets:
+        Arbor: all
+    test:
+      gatherCoverageData: true
+      targets:
+        - ArborTests
+        - ArborUITests
