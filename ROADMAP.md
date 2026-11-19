@@ -7,11 +7,11 @@ when merged-ready: implemented, tested, documented.
 - [x] `commit-msg` hook (Conventional Commits, no attribution mentions)
 - [x] Git ignore rules, MIT license, SwiftLint / SwiftFormat configs
 - [x] Project guide and roadmap
-- [ ] Six Kit packages scaffolded, each with a passing test
-- [ ] XcodeGen app shell with unit test and launch UI test
-- [ ] CI workflow (Kit test matrix, app build + test, lint, commit check, `.xcresult` upload)
-- [ ] Release workflow (protected environment, temporary keychain, self-signed, zip + dmg + SHA-256)
-- [ ] README (install, Gatekeeper, Full Disk Access) and signing setup guide
+- [x] Six Kit packages scaffolded, each with a passing test
+- [x] XcodeGen app shell with unit test and launch UI test
+- [x] CI workflow (Kit test matrix, app build + test, lint, commit check, `.xcresult` upload)
+- [x] Release workflow (protected environment, temporary keychain, self-signed, zip + dmg + SHA-256)
+- [x] README (install, Gatekeeper, Full Disk Access) and signing setup guide
 
 ## Phase 1 — Canvas and panels
 - [ ] Viewport model: pan, zoom around a point, zoom limits, reset (tested)
