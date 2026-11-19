@@ -1,0 +1,21 @@
+# Xcode / XcodeGen output
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+build/
+*.xcresult
+
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+
+# Release and signing material (never commit)
+dist/
+*.p12
+*.key
+*.cer
+*.crt

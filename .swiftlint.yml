@@ -1,0 +1,10 @@
+excluded:
+  - "**/.build"
+  - DerivedData
+  - "*.xcodeproj"
+disabled_rules:
+  - trailing_comma        # SwiftFormat owns comma style
+  - opening_brace         # SwiftFormat owns brace wrapping
+line_length:
+  warning: 120
+  ignores_comments: true
