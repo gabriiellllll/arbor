@@ -124,8 +124,22 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
         UserDefaults.standard.set(style.rawValue, forKey: Self.backgroundDefaultsKey)
     }
 
+    /// The sender's tag is the index of the layout in `CanvasLayout.allCases`.
+    @objc func setCanvasLayout(_ sender: NSMenuItem) {
+        guard CanvasLayout.allCases.indices.contains(sender.tag) else { return }
+        canvas.layout = CanvasLayout.allCases[sender.tag]
+    }
+
+    @objc func compareSideBySide(_: Any?) {
+        canvas.compareSelection()
+    }
+
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
         switch item.action {
+        case #selector(setCanvasLayout(_:)):
+            item.state = CanvasLayout.allCases.firstIndex(of: canvas.layout) == item.tag ? .on : .off
+        case #selector(compareSideBySide(_:)):
+            return canvas.canCompareSelection
         case #selector(setCanvasBackground(_:)):
             item.state = CanvasBackground.allCases.firstIndex(of: canvas.canvasView.background) == item.tag ? .on : .off
         case #selector(toggleHandTool(_:)):
@@ -150,13 +164,14 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
         static let zoomIn = NSToolbarItem.Identifier("zoomIn")
         static let zoomReset = NSToolbarItem.Identifier("zoomReset")
         static let background = NSToolbarItem.Identifier("background")
+        static let layout = NSToolbarItem.Identifier("layout")
         static let openFolder = NSToolbarItem.Identifier("openFolder")
     }
 
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
         [
             .toggleSidebar, .sidebarTrackingSeparator, Item.openFolder, .flexibleSpace,
-            Item.hand, Item.zoomOut, Item.zoomLevel, Item.zoomIn, Item.zoomReset, Item.background,
+            Item.hand, Item.zoomOut, Item.zoomLevel, Item.zoomIn, Item.zoomReset, Item.layout, Item.background,
             .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector,
         ]
     }
@@ -183,6 +198,8 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
             zoomLevelItem()
         case Item.background:
             backgroundItem()
+        case Item.layout:
+            layoutItem()
         default:
             nil
         }
@@ -222,6 +239,19 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
         let item = NSToolbarItem(itemIdentifier: Item.zoomLevel)
         item.label = String(localized: "Zoom")
         item.view = zoomLabel
+        return item
+    }
+
+    private func layoutItem() -> NSToolbarItem {
+        let item = NSMenuToolbarItem(itemIdentifier: Item.layout)
+        item.label = String(localized: "Layout")
+        item.toolTip = String(localized: "Layout")
+        item.image = NSImage(
+            systemSymbolName: "point.3.connected.trianglepath.dotted",
+            accessibilityDescription: item.label
+        )
+        item.menu = MainMenu.layoutMenu()
+        item.showsIndicator = true
         return item
     }
 
