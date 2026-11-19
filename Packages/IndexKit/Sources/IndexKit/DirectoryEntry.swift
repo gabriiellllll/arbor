@@ -20,4 +20,19 @@ public struct DirectoryEntry: Equatable, Sendable {
     public let fileID: UInt64
     /// Hidden by a leading dot or the `UF_HIDDEN` flag.
     public let isHidden: Bool
+
+    public init(
+        name: String, kind: Kind, size: Int64, allocatedSize: Int64, itemCount: Int?,
+        created: Date, modified: Date, fileID: UInt64, isHidden: Bool
+    ) {
+        self.name = name
+        self.kind = kind
+        self.size = size
+        self.allocatedSize = allocatedSize
+        self.itemCount = itemCount
+        self.created = created
+        self.modified = modified
+        self.fileID = fileID
+        self.isHidden = isHidden
+    }
 }
