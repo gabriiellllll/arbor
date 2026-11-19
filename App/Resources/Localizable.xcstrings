@@ -1,0 +1,27 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "About Arbor" : {
+      "comment" : "App menu item"
+    },
+    "Arbor" : {
+      "comment" : "Main window title"
+    },
+    "Close" : {
+      "comment" : "Window menu item"
+    },
+    "Hide Arbor" : {
+      "comment" : "App menu item"
+    },
+    "Minimize" : {
+      "comment" : "Window menu item"
+    },
+    "Quit Arbor" : {
+      "comment" : "App menu item"
+    },
+    "Window" : {
+      "comment" : "Window menu title"
+    }
+  },
+  "version" : "1.0"
+}
