@@ -18,6 +18,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.showWindow(nil)
         windowController = controller
         NSApp.activate()
+        do {
+            if let fixture = try UITestFixture.makeIfRequested() {
+                controller.openFolder(fixture)
+            }
+        } catch {
+            NSApp.presentError(error)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
