@@ -90,7 +90,9 @@ public final class CanvasView: NSView {
         let canvasRect = CGRect(x: -extent, y: -extent, width: extent * 2, height: extent * 2)
         documentView.frame = canvasRect
         documentView.bounds = canvasRect
-        branchesView.frame = documentView.bounds
+        // Same frame and bounds as the document, so branch paths use canvas coordinates.
+        branchesView.frame = canvasRect
+        branchesView.bounds = canvasRect
         documentView.addSubview(branchesView)
         documentView.onPan = { [weak self] delta in self?.pan(byViewDelta: delta) }
         scrollView.documentView = documentView
