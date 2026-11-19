@@ -5,7 +5,7 @@ import CanvasKit
 /// where the user put panels and remembers it. Dragging a panel switches to manual.
 extension CanvasViewController {
     func layoutDidChange(from old: CanvasLayout) {
-        UserDefaults.standard.set(layout.rawValue, forKey: Self.layoutDefaultsKey)
+        defaults.set(layout.rawValue, forKey: Self.layoutDefaultsKey)
         if old == .manual {
             manualFrames = currentFrames()
         }

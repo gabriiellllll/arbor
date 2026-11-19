@@ -18,9 +18,10 @@ final class CanvasViewController: NSViewController {
     var onInspectedItemChange: ((FolderItem?) -> Void)?
     var onViewportChange: (() -> Void)?
 
-    var layout: CanvasLayout = UserDefaults.standard.string(forKey: layoutDefaultsKey)
-        .flatMap(CanvasLayout.init(rawValue:)) ?? .treeRight
-    {
+    /// Where the layout choice is saved (tests pass a throwaway domain).
+    let defaults: UserDefaults
+
+    var layout: CanvasLayout {
         didSet { layoutDidChange(from: oldValue) }
     }
 
@@ -50,6 +51,17 @@ final class CanvasViewController: NSViewController {
 
     private lazy var watcher = FolderWatcher { [weak self] changes in
         Task { @MainActor in self?.foldersChanged(changes) }
+    }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        layout = defaults.string(forKey: Self.layoutDefaultsKey).flatMap(CanvasLayout.init(rawValue:)) ?? .treeRight
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError("init(coder:) is not supported")
     }
 
     override func loadView() {
@@ -164,8 +176,10 @@ final class CanvasViewController: NSViewController {
                 addPanel(added, url: panel.content, frame: panel.frame)
             }
         }
-        activePanel = id
-        onInspectedItemChange?(items.count == 1 ? items.first : nil)
+        // Reloads also report selection: only the active panel drives the inspector.
+        if id == activePanel {
+            onInspectedItemChange?(items.count == 1 ? items.first : nil)
+        }
         if isCompared(id) {
             mirrorSelection(from: id, names: Set(folders.map(\.name)))
             updateComparisonMarks()

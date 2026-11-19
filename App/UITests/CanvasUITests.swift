@@ -9,6 +9,8 @@ final class CanvasUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["ARBOR_UI_TEST_FIXTURE"] = "1"
+        // Fixed view settings, whatever earlier runs saved (arguments override saved defaults).
+        app.launchArguments += ["-canvasLayout", "treeRight", "-canvasBackground", "dots"]
         app.launch()
         XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 10))
         // CI screens are small: zoom out to 50 % (1 → 0.9 → 0.75 → 0.67 → 0.5) so parent and
