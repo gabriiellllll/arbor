@@ -10,6 +10,16 @@ final class CanvasUITests: XCTestCase {
         app = XCUIApplication()
         app.launchEnvironment["ARBOR_UI_TEST_FIXTURE"] = "1"
         app.launch()
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 10))
+        // CI screens are small: zoom out to 50 % (1 → 0.9 → 0.75 → 0.67 → 0.5) so parent and
+        // child panels fit side by side.
+        for _ in 0 ..< 4 {
+            app.typeKey("-", modifierFlags: .command)
+        }
+        let zoom = app.staticTexts["zoomLevel"]
+        XCTAssertTrue(zoom.waitForExistence(timeout: 5))
+        let halfSize = NSPredicate(format: "value CONTAINS '50'")
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: halfSize, evaluatedWith: zoom)], timeout: 5), .completed)
     }
 
     @MainActor
