@@ -1,27 +1,80 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld items" : {
+      "comment" : "Number of items in a folder panel title bar",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld items"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "About Arbor" : {
       "comment" : "App menu item"
     },
+    "Actual Size" : {},
     "Arbor" : {
       "comment" : "Main window title"
     },
+    "Arbor can’t read this folder. Grant Full Disk Access in System Settings to see it." : {},
+    "Background" : {},
     "Close" : {
       "comment" : "Window menu item"
     },
+    "Close Panel" : {},
+    "Created" : {},
+    "Crosses" : {},
+    "Dots" : {},
+    "File" : {},
+    "Grid" : {},
+    "Hand Tool" : {},
     "Hide Arbor" : {
       "comment" : "App menu item"
     },
+    "Icons" : {},
+    "Kind" : {},
+    "List" : {},
     "Minimize" : {
       "comment" : "Window menu item"
     },
+    "Modified" : {},
+    "Name" : {},
+    "No Selection" : {},
+    "Open" : {},
+    "Open Folder" : {},
+    "Open Folder…" : {},
+    "Plain" : {},
     "Quit Arbor" : {
       "comment" : "App menu item"
     },
+    "Show Inspector" : {},
+    "Show Sidebar" : {},
+    "Size" : {},
+    "This folder can’t be read: %@" : {},
+    "This folder no longer exists." : {},
+    "View" : {},
+    "Where" : {},
     "Window" : {
       "comment" : "Window menu title"
-    }
+    },
+    "Zoom" : {},
+    "Zoom In" : {},
+    "Zoom Out" : {}
   },
   "version" : "1.0"
 }
