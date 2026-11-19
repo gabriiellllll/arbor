@@ -137,7 +137,7 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
     }
 
     private func updateZoomLabel() {
-        zoomLabel.stringValue = Double(canvas.canvasView.magnification)
+        zoomLabel.stringValue = Double(canvas.canvasView.targetMagnification)
             .formatted(.percent.precision(.fractionLength(0)))
     }
 
