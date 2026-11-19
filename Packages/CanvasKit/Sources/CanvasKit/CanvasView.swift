@@ -126,8 +126,12 @@ public final class CanvasView: NSView {
     // MARK: - Scrolling
 
     /// Scrolls so `rect` (canvas coordinates) is visible, moving as little as possible.
-    public func reveal(_ rect: CGRect, animated: Bool = true) {
-        let origin = Reveal.origin(revealing: rect, in: visibleCanvasRect, margin: 40 / magnification)
+    /// With a `context` rectangle, keeps it visible too when both fit.
+    public func reveal(_ rect: CGRect, context: CGRect? = nil, animated: Bool = true) {
+        let margin = 40 / magnification
+        let origin = context.map {
+            Reveal.origin(revealing: rect, withContext: $0, in: visibleCanvasRect, margin: margin)
+        } ?? Reveal.origin(revealing: rect, in: visibleCanvasRect, margin: margin)
         scroll(toCanvasOrigin: origin, animated: animated)
     }
 
