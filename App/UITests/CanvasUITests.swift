@@ -31,6 +31,8 @@ final class CanvasUITests: XCTestCase {
 
     @MainActor
     private func attachScreenshot(_ name: String) {
+        // Let layout animations finish so screenshots show where panels settle.
+        Thread.sleep(forTimeInterval: 0.8)
         let attachment = XCTAttachment(screenshot: app.windows["main"].screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
