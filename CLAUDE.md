@@ -11,6 +11,8 @@ external disks. Roadmap and status: `ROADMAP.md`.
 - UI base language is English. Every user-facing string goes through
   `App/Resources/Localizable.xcstrings` (`String(localized:)`, `LocalizedStringResource`).
   Never hard-code a user-facing string.
+- `xcodebuild` extracts strings but does not update the catalog: after adding strings,
+  build, then run `scripts/sync-strings.sh` and commit the catalog.
 - The maintainer is addressed in French in interactive sessions; the repo stays English.
 
 ## Constraints
@@ -66,6 +68,10 @@ swift test --package-path Packages/CanvasKit
 xcodegen generate
 xcodebuild -project Arbor.xcodeproj -scheme Arbor -destination 'platform=macOS' build test
 
+# App unit tests only (UI tests drive the real mouse and keyboard; CI runs them)
+xcodebuild -project Arbor.xcodeproj -scheme Arbor -destination 'platform=macOS' \
+  -only-testing:ArborTests test
+
 # Lint and format
 swiftlint --strict
 swiftformat --lint .
@@ -99,7 +105,10 @@ Release builds use the stable self-signed certificate (see `docs/signing.md`).
   catch-up; file ops (conflicts, undo); rename preview (regex, numbering, collisions);
   canvas layouts (deterministic positions, no overlap); backup (encryption round trip,
   recovery key, dedup).
-- Coverage target ≥ 70 % per Kit.
+- UI tests launch the app with `ARBOR_UI_TEST_FIXTURE=1`: the app builds a small folder
+  tree in a temporary directory, opens it, and skips the Full Disk Access sheet.
+  Screenshots attached by UI tests are in the CI `.xcresult` artifact.
+- Coverage target ≥ 70 % per Kit (enforced in CI by `scripts/coverage.sh`).
 - Never disable, delete or weaken a test to make CI pass: fix the code or report the issue.
 
 ## Release
