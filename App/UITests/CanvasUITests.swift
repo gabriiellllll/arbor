@@ -104,7 +104,12 @@ final class CanvasUITests: XCTestCase {
         XCTAssertTrue(row("Inner", in: "Beta").waitForExistence(timeout: 5))
         row("Inner", in: "Alpha").click()
         let innerPanels = app.groups.matching(identifier: "panel.Inner")
-        XCTAssertTrue(innerPanels.element(boundBy: 1).waitForExistence(timeout: 5), "Inner opens on both sides")
+        let bothSides = innerPanels.element(boundBy: 1).waitForExistence(timeout: 5)
+        if !bothSides {
+            // Leaves the window hierarchy in the CI log to diagnose failures.
+            print(app.windows["main"].debugDescription)
+        }
+        XCTAssertTrue(bothSides, "Inner opens on both sides")
         attachScreenshot("compare")
     }
 }
