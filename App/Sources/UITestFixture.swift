@@ -13,7 +13,7 @@ enum UITestFixture {
         guard isActive else { return nil }
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("ArborUITests-\(UUID().uuidString)/Root", isDirectory: true)
-        for folder in ["Alpha/Inner", "Beta"] {
+        for folder in ["Alpha/Inner", "Alpha/OnlyA", "Beta/Inner"] {
             try FileManager.default.createDirectory(
                 at: root.appendingPathComponent(folder), withIntermediateDirectories: true
             )

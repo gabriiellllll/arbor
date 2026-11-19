@@ -74,4 +74,37 @@ final class CanvasUITests: XCTestCase {
         XCTAssertTrue(app.groups["panel.Alpha"].exists)
         attachScreenshot("deep chain")
     }
+
+    @MainActor
+    func testLayoutCommandsKeepTheTree() {
+        XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
+        row("Alpha", in: "Root").click()
+        XCTAssertTrue(app.groups["panel.Alpha"].waitForExistence(timeout: 5))
+        app.typeKey("2", modifierFlags: .command)
+        attachScreenshot("tree down")
+        app.typeKey("3", modifierFlags: .command)
+        attachScreenshot("star")
+        app.typeKey("1", modifierFlags: .command)
+        XCTAssertTrue(app.groups["panel.Root"].exists)
+        XCTAssertTrue(app.groups["panel.Alpha"].exists)
+    }
+
+    @MainActor
+    func testCompareSideBySideFollowsTheSameFolderOnBothSides() {
+        XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
+        row("Alpha", in: "Root").click()
+        XCUIElement.perform(withKeyModifiers: .command) {
+            row("Beta", in: "Root").click()
+        }
+        XCTAssertTrue(app.groups["panel.Beta"].waitForExistence(timeout: 5))
+        app.menuBars.menuBarItems["View"].click()
+        app.menuBars.menuItems["Compare Side by Side"].click()
+
+        XCTAssertTrue(row("Inner", in: "Alpha").waitForExistence(timeout: 5))
+        XCTAssertTrue(row("Inner", in: "Beta").waitForExistence(timeout: 5))
+        row("Inner", in: "Alpha").click()
+        let innerPanels = app.groups.matching(identifier: "panel.Inner")
+        XCTAssertTrue(innerPanels.element(boundBy: 1).waitForExistence(timeout: 5), "Inner opens on both sides")
+        attachScreenshot("compare")
+    }
 }
