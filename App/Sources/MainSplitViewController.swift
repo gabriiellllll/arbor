@@ -22,7 +22,7 @@ final class MainSplitViewController: NSSplitViewController {
         inspectorItem.minimumThickness = 220
         addSplitViewItem(inspectorItem)
 
-        sidebar.onOpen = { [weak self] url in self?.canvas.openRoot(url) }
+        sidebar.onOpen = { [weak self] url, color in self?.canvas.openRoot(url, colorIndex: color) }
         canvas.onInspectedItemChange = { [weak self] item in self?.inspectorModel.item = item }
     }
 }
