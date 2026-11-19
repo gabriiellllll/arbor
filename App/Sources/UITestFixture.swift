@@ -1,0 +1,20 @@
+import Foundation
+
+/// UI tests launch the app with `ARBOR_UI_TEST_FIXTURE=1`: the app then builds a small
+/// folder tree in a fresh temporary directory and opens it, so tests never touch user files.
+enum UITestFixture {
+    static let environmentKey = "ARBOR_UI_TEST_FIXTURE"
+
+    static func makeIfRequested() throws -> URL? {
+        guard ProcessInfo.processInfo.environment[environmentKey] == "1" else { return nil }
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ArborUITests-\(UUID().uuidString)/Root", isDirectory: true)
+        for folder in ["Alpha/Inner", "Beta"] {
+            try FileManager.default.createDirectory(
+                at: root.appendingPathComponent(folder), withIntermediateDirectories: true
+            )
+        }
+        try Data("notes".utf8).write(to: root.appendingPathComponent("notes.txt"))
+        return root
+    }
+}
