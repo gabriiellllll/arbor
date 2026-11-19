@@ -8,3 +8,5 @@ disabled_rules:
 line_length:
   warning: 120
   ignores_comments: true
+identifier_name:
+  excluded: [x, y, dx, dy, id, xs, ys]   # geometry code
