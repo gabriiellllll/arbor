@@ -29,11 +29,11 @@ when merged-ready: implemented, tested, documented.
 - [x] UI tests: launch, open a folder, create a child panel
 
 ## Phase 2 — Layouts and colors
-- [ ] Layouts: tree right, tree down, star, manual (deterministic, tested)
-- [ ] Overlap removal in automatic layouts (tested)
-- [ ] Animated layout changes with attached branches
-- [ ] Per-branch colors from favorites, inherited by sub-branches
-- [ ] Side-by-side comparison of sibling folders with aligned subtrees
+- [x] Layouts: tree right, tree down, star, manual (deterministic, tested)
+- [x] Overlap removal in automatic layouts (tested)
+- [x] Animated layout changes with attached branches
+- [x] Per-branch colors (one per root, from its sidebar place), inherited by sub-branches; editable favorite colors come with phase 3 favorites
+- [x] Side-by-side comparison of sibling folders: homologous folders on the same row, mirrored navigation, one-sided items marked
 
 ## Phase 3 — Sidebar, workspaces, basic operations
 - [ ] Workspaces: create, rename, delete, each remembers its canvas
