@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kits:
+    name: Test ${{ matrix.kit }}
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        kit: [CanvasKit, IndexKit, FileOpsKit, DiskKit, PreviewKit, BackupKit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/cache@v4
+        with:
+          path: Packages/${{ matrix.kit }}/.build
+          key: spm-${{ matrix.kit }}-${{ runner.os }}-${{ hashFiles(format('Packages/{0}/Package.swift', matrix.kit)) }}
+          restore-keys: spm-${{ matrix.kit }}-${{ runner.os }}-
+      - name: Run tests
+        run: swift test --package-path Packages/${{ matrix.kit }} --enable-code-coverage
+      - name: Check coverage
+        run: scripts/coverage.sh ${{ matrix.kit }} 70
+
+  app:
+    name: Build and test app
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-app-${{ runner.os }}-${{ hashFiles('Packages/*/Package.swift', 'project.yml') }}
+          restore-keys: spm-app-${{ runner.os }}-
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build and test
+        run: |
+          xcodebuild -project Arbor.xcodeproj -scheme Arbor \
+            -destination 'platform=macOS' \
+            -resultBundlePath TestResults.xcresult \
+            build test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults.xcresult
+          path: TestResults.xcresult
+          if-no-files-found: ignore
+
+  lint:
+    name: Lint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install swiftlint swiftformat
+      - name: SwiftLint
+        run: swiftlint --strict
+      - name: SwiftFormat
+        run: swiftformat --lint .
+
+  commit-check:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check every commit in the pull request
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          status=0
+          for sha in $(git rev-list "$BASE..$HEAD"); do
+            git log -1 --format=%B "$sha" > "$RUNNER_TEMP/msg"
+            if ! .githooks/commit-msg "$RUNNER_TEMP/msg"; then
+              echo "::error::Commit $sha has an invalid message"
+              status=1
+            fi
+          done
+          exit $status
