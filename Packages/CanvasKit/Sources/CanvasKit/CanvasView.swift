@@ -33,6 +33,15 @@ public final class CanvasView: NSView {
         scrollView.magnification
     }
 
+    /// Where the zoom is heading: differs from `magnification` while a zoom animates, so
+    /// repeated zoom commands keep stepping instead of restarting from the current value.
+    public var targetMagnification: CGFloat {
+        pendingZoom ?? magnification
+    }
+
+    private var pendingZoom: CGFloat?
+    private var zoomGeneration = 0
+
     /// The part of the canvas currently on screen, in canvas coordinates.
     public var visibleCanvasRect: CGRect {
         scrollView.contentView.bounds
@@ -98,11 +107,11 @@ public final class CanvasView: NSView {
     // MARK: - Zoom
 
     public func zoomIn() {
-        setZoom(Zoom.stepIn(from: magnification))
+        setZoom(Zoom.stepIn(from: targetMagnification))
     }
 
     public func zoomOut() {
-        setZoom(Zoom.stepOut(from: magnification))
+        setZoom(Zoom.stepOut(from: targetMagnification))
     }
 
     public func resetZoom() {
@@ -113,14 +122,26 @@ public final class CanvasView: NSView {
     public func setZoom(_ scale: CGFloat, animated: Bool = true) {
         let visible = visibleCanvasRect
         let center = CGPoint(x: visible.midX, y: visible.midY)
+        let target = Zoom.clamped(scale)
         guard animated else {
-            scrollView.setMagnification(Zoom.clamped(scale), centeredAt: center)
+            pendingZoom = nil
+            scrollView.setMagnification(target, centeredAt: center)
             return
         }
+        pendingZoom = target
+        zoomGeneration += 1
+        let generation = zoomGeneration
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
-            scrollView.animator().setMagnification(Zoom.clamped(scale), centeredAt: center)
+            scrollView.animator().setMagnification(target, centeredAt: center)
+        } completionHandler: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, generation == zoomGeneration else { return }
+                pendingZoom = nil
+                onViewportChange?()
+            }
         }
+        onViewportChange?()
     }
 
     // MARK: - Scrolling
