@@ -7,9 +7,9 @@ public enum PanelPlacement {
     /// Distance from the child's top edge to the point its branch attaches to.
     public static let titleOffset: CGFloat = 18
 
+    // ponytail: pushes down only; phase 2 layouts replace this with full overlap removal.
     /// Right of the parent, title aligned with the source row, then pushed down until it
     /// overlaps nothing in `avoiding`.
-    // ponytail: pushes down only; phase 2 layouts replace this with full overlap removal.
     public static func childFrame(parent: CGRect, sourceY: CGFloat, size: CGSize, avoiding: [CGRect]) -> CGRect {
         var frame = CGRect(
             origin: CGPoint(x: parent.maxX + horizontalGap, y: sourceY - titleOffset),
