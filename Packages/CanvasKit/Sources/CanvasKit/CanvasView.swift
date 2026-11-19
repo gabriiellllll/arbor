@@ -153,6 +153,12 @@ public final class CanvasView: NSView {
         ))
     }
 
+    override public func layout() {
+        super.layout()
+        // Resizing the clip view does not always post a bounds change.
+        viewportDidChange()
+    }
+
     private func viewportDidChange() {
         backgroundView.canvasRect = visibleCanvasRect
         backgroundView.magnification = magnification
