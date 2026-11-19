@@ -69,6 +69,13 @@ final class CanvasViewTests: XCTestCase {
         XCTAssertTrue(canvas.documentView.hitTest(point) === canvas.documentView)
     }
 
+    func testBranchLayerUsesCanvasCoordinates() throws {
+        let branches = canvas.branchesView
+        XCTAssertEqual(branches.convert(CGPoint(x: 120, y: 80), to: canvas.documentView), CGPoint(x: 120, y: 80))
+        let layer = try XCTUnwrap(branches.layer)
+        XCTAssertEqual(layer.bounds, canvas.documentView.bounds)
+    }
+
     func testBranchesKeepOneLayerPerChild() throws {
         let first = PanelID()
         let second = PanelID()
