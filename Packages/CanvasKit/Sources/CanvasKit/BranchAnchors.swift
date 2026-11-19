@@ -31,14 +31,28 @@ public enum BranchAnchors {
         case .below:
             return BranchCurve(
                 from: CGPoint(x: parent.maxX, y: sourceY), leaving: right,
-                to: CGPoint(x: child.midX, y: child.minY), entering: CGVector(dx: 0, dy: 1)
+                to: CGPoint(x: verticalEntryX(parent: parent, child: child), y: child.minY),
+                entering: CGVector(dx: 0, dy: 1)
             )
         case .above:
             return BranchCurve(
                 from: CGPoint(x: parent.maxX, y: sourceY), leaving: right,
-                to: CGPoint(x: child.midX, y: child.maxY), entering: CGVector(dx: 0, dy: -1)
+                to: CGPoint(x: verticalEntryX(parent: parent, child: child), y: child.maxY),
+                entering: CGVector(dx: 0, dy: -1)
             )
         }
+    }
+
+    /// Inset of a top or bottom entry point from the child's corners.
+    static let cornerInset: CGFloat = 20
+
+    /// Where a branch leaving the parent's right edge enters a child above or below: the
+    /// child's center if it lies right of the parent, otherwise as far right of the parent as
+    /// the child allows, so the branch never loops back behind the parent.
+    private static func verticalEntryX(parent: CGRect, child: CGRect) -> CGFloat {
+        let clear = parent.maxX + BranchCurve.minimumBend
+        guard child.midX < clear else { return child.midX }
+        return min(max(clear, child.minX + cornerInset), child.maxX - cornerInset)
     }
 
     private enum Side {

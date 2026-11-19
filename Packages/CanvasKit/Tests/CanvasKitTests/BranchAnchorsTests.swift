@@ -21,18 +21,31 @@ final class BranchAnchorsTests: XCTestCase {
         XCTAssertLessThan(curve.control1.x, curve.start.x)
     }
 
-    func testChildBelowIsEnteredFromTheTop() {
-        let child = CGRect(x: 0, y: 500, width: 300, height: 400)
+    func testChildRightBelowIsEnteredFromTheTopCenter() {
+        // Slightly right of the parent, well below it: the vertical gap wins.
+        let child = CGRect(x: 320, y: 500, width: 300, height: 400)
         let curve = BranchAnchors.curve(parent: parent, sourceY: 120, child: child)
         XCTAssertEqual(curve.start, CGPoint(x: 300, y: 120))
-        XCTAssertEqual(curve.end, CGPoint(x: 150, y: 500))
+        XCTAssertEqual(curve.end, CGPoint(x: 470, y: 500))
         XCTAssertLessThan(curve.control2.y, curve.end.y, "arrives moving down")
+    }
+
+    func testChildDirectlyBelowIsEnteredNearItsTopRightCorner() {
+        let child = CGRect(x: 0, y: 500, width: 300, height: 400)
+        let curve = BranchAnchors.curve(parent: parent, sourceY: 120, child: child)
+        XCTAssertEqual(curve.end, CGPoint(x: 300 - BranchAnchors.cornerInset, y: 500))
+    }
+
+    func testChildBelowAndLeftIsEnteredClearOfTheParent() {
+        let child = CGRect(x: -100, y: 500, width: 600, height: 400)
+        let curve = BranchAnchors.curve(parent: parent, sourceY: 120, child: child)
+        XCTAssertEqual(curve.end.x, 300 + BranchCurve.minimumBend, "clear of the parent, not looping behind it")
     }
 
     func testChildAboveIsEnteredFromTheBottom() {
         let child = CGRect(x: 0, y: -600, width: 300, height: 400)
         let curve = BranchAnchors.curve(parent: parent, sourceY: 120, child: child)
-        XCTAssertEqual(curve.end, CGPoint(x: 150, y: -200))
+        XCTAssertEqual(curve.end, CGPoint(x: 300 - BranchAnchors.cornerInset, y: -200))
         XCTAssertGreaterThan(curve.control2.y, curve.end.y, "arrives moving up")
     }
 
