@@ -24,13 +24,19 @@ extension CanvasViewController {
         guard let id = activePanel, let panel = panels[id] else { return }
         let folders = panel.selectedItems.filter(\.isFolder)
         guard folders.count == 2 else { return }
+        // The comparison replaces the two branches opened from the source panel.
+        panel.select(names: [])
         endComparison()
         let left = addRoot(folders[0].url, colorIndex: nil)
         let right = addRoot(folders[1].url, colorIndex: nil)
         compare = CompareSession(left: left, right: right)
         updateComparisonMarks()
         activePanel = left
-        applyLayout(revealing: right)
+        let targets = layoutTargets()
+        animate(to: targets, revealing: nil)
+        if let leftFrame = targets[left], let rightFrame = targets[right] {
+            canvasView.reveal(rightFrame, context: leftFrame)
+        }
     }
 
     func endComparison() {
