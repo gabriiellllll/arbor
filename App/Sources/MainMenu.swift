@@ -25,6 +25,8 @@ enum MainMenu {
             keyEquivalent: "q"
         )
         main.addItem(submenu: appMenu)
+        main.addItem(submenu: fileMenu())
+        main.addItem(submenu: viewMenu())
 
         let windowMenu = NSMenu(title: String(localized: "Window"))
         windowMenu.addItem(
@@ -41,6 +43,71 @@ enum MainMenu {
         NSApp.windowsMenu = windowMenu
 
         return main
+    }
+}
+
+extension MainMenu {
+    static func fileMenu() -> NSMenu {
+        let menu = NSMenu(title: String(localized: "File"))
+        menu.addItem(
+            withTitle: String(localized: "Open Folder…"),
+            action: #selector(MainWindowController.openDocument(_:)),
+            keyEquivalent: "o"
+        )
+        return menu
+    }
+
+    static func viewMenu() -> NSMenu {
+        let menu = NSMenu(title: String(localized: "View"))
+        menu.addItem(
+            withTitle: String(localized: "Zoom In"), action: #selector(MainWindowController.zoomIn(_:)),
+            keyEquivalent: "+"
+        )
+        menu.addItem(
+            withTitle: String(localized: "Zoom Out"), action: #selector(MainWindowController.zoomOut(_:)),
+            keyEquivalent: "-"
+        )
+        menu.addItem(
+            withTitle: String(localized: "Actual Size"), action: #selector(MainWindowController.resetZoom(_:)),
+            keyEquivalent: "0"
+        )
+        menu.addItem(.separator())
+        menu.addItem(
+            withTitle: String(localized: "Hand Tool"), action: #selector(MainWindowController.toggleHandTool(_:)),
+            keyEquivalent: ""
+        )
+        let background = NSMenuItem(title: String(localized: "Background"), action: nil, keyEquivalent: "")
+        background.submenu = backgroundMenu()
+        menu.addItem(background)
+        menu.addItem(.separator())
+        let sidebar = menu.addItem(
+            withTitle: String(localized: "Show Sidebar"), action: #selector(NSSplitViewController.toggleSidebar(_:)),
+            keyEquivalent: "s"
+        )
+        sidebar.keyEquivalentModifierMask = [.command, .control]
+        let inspector = menu.addItem(
+            withTitle: String(localized: "Show Inspector"),
+            action: #selector(NSSplitViewController.toggleInspector(_:)),
+            keyEquivalent: "i"
+        )
+        inspector.keyEquivalentModifierMask = [.command, .option]
+        return menu
+    }
+
+    /// One item per canvas background style; the tag is the style's index.
+    static func backgroundMenu() -> NSMenu {
+        let titles = [
+            String(localized: "Dots"), String(localized: "Grid"), String(localized: "Crosses"),
+            String(localized: "Plain"),
+        ]
+        let menu = NSMenu(title: String(localized: "Background"))
+        for (index, title) in titles.enumerated() {
+            let item = menu.addItem(
+                withTitle: title, action: #selector(MainWindowController.setCanvasBackground(_:)), keyEquivalent: ""
+            )
+            item.tag = index
+        }
+        return menu
     }
 }
 

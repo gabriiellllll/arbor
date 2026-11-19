@@ -10,3 +10,21 @@ final class MainMenuTests: XCTestCase {
         XCTAssertEqual(quit.keyEquivalentModifierMask, .command)
     }
 }
+
+@MainActor
+final class ViewMenuTests: XCTestCase {
+    func testZoomCommandsHaveStandardShortcuts() {
+        let menu = MainMenu.viewMenu()
+        let shortcuts = Dictionary(uniqueKeysWithValues: menu.items.compactMap { item in
+            item.action.map { ($0, item.keyEquivalent) }
+        })
+        XCTAssertEqual(shortcuts[#selector(MainWindowController.zoomIn(_:))], "+")
+        XCTAssertEqual(shortcuts[#selector(MainWindowController.zoomOut(_:))], "-")
+        XCTAssertEqual(shortcuts[#selector(MainWindowController.resetZoom(_:))], "0")
+    }
+
+    func testBackgroundMenuListsEveryStyleInOrder() {
+        let menu = MainMenu.backgroundMenu()
+        XCTAssertEqual(menu.items.map(\.tag), Array(0 ..< 4))
+    }
+}
