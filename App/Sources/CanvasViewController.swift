@@ -1,6 +1,7 @@
 import AppKit
 import CanvasKit
 import IndexKit
+import SwiftUI
 
 /// Owns the canvas and its folder panels. Selecting folders in a panel opens them as child
 /// panels linked by branches; selecting something else replaces those branches.
@@ -24,6 +25,9 @@ final class CanvasViewController: NSViewController {
         }
     }
 
+    private let banner = NSHostingView(rootView: LimitedModeBanner())
+    private var canvasTop: NSLayoutConstraint?
+
     private lazy var watcher = FolderWatcher { [weak self] changes in
         Task { @MainActor in self?.foldersChanged(changes) }
     }
@@ -33,13 +37,29 @@ final class CanvasViewController: NSViewController {
         view = NSView()
         canvasView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(canvasView)
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        banner.isHidden = true
+        banner.setAccessibilityIdentifier("limitedModeBanner")
+        view.addSubview(banner)
+        let canvasTop = canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
+        self.canvasTop = canvasTop
         NSLayoutConstraint.activate([
-            canvasView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            banner.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            banner.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            banner.heightAnchor.constraint(equalToConstant: LimitedModeBanner.height),
+            canvasTop,
             canvasView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             canvasView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             canvasView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         canvasView.onViewportChange = { [weak self] in self?.onViewportChange?() }
+    }
+
+    /// Shows or hides the limited mode banner above the canvas.
+    func setLimitedMode(_ limited: Bool) {
+        banner.isHidden = !limited
+        canvasTop?.constant = limited ? LimitedModeBanner.height : 0
     }
 
     // MARK: - Opening

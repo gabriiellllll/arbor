@@ -5,8 +5,12 @@ import Foundation
 enum UITestFixture {
     static let environmentKey = "ARBOR_UI_TEST_FIXTURE"
 
+    static var isActive: Bool {
+        ProcessInfo.processInfo.environment[environmentKey] == "1"
+    }
+
     static func makeIfRequested() throws -> URL? {
-        guard ProcessInfo.processInfo.environment[environmentKey] == "1" else { return nil }
+        guard isActive else { return nil }
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("ArborUITests-\(UUID().uuidString)/Root", isDirectory: true)
         for folder in ["Alpha/Inner", "Beta"] {

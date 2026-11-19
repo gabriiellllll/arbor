@@ -1,5 +1,6 @@
 import AppKit
 import CanvasKit
+import SwiftUI
 
 /// The main window: sidebar, canvas, inspector and toolbar. Menu and toolbar commands land
 /// here through the responder chain, whatever has focus.
@@ -10,6 +11,9 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
     private let split = MainSplitViewController()
     private let zoomLabel = NSTextField(labelWithString: "100 %")
     private let handButton = NSButton()
+
+    private let onboarding = AccessOnboarding(defaults: .standard)
+    private var onboardingSheet: NSViewController?
 
     private var canvas: CanvasViewController {
         split.canvas
@@ -48,6 +52,32 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
 
     func openFolder(_ url: URL) {
         canvas.openRoot(url)
+    }
+
+    /// Checks Full Disk Access (at launch and whenever the app becomes active): limited mode
+    /// banner while it is missing, onboarding the first time or when it was lost.
+    func checkFullDiskAccess(showOnboarding: Bool) {
+        let status = FullDiskAccess.status()
+        canvas.setLimitedMode(status == .denied)
+        let prompt = onboarding.prompt(for: status)
+        if prompt == .none, let sheet = onboardingSheet {
+            split.dismiss(sheet)
+            onboardingSheet = nil
+        }
+        guard showOnboarding, prompt != .none, onboardingSheet == nil else { return }
+        let sheet = NSHostingController(rootView: AccessOnboardingView(prompt: prompt) { [weak self] in
+            self?.dismissOnboarding()
+        })
+        onboardingSheet = sheet
+        split.presentAsSheet(sheet)
+    }
+
+    private func dismissOnboarding() {
+        onboarding.dismiss()
+        if let sheet = onboardingSheet {
+            split.dismiss(sheet)
+        }
+        onboardingSheet = nil
     }
 
     // MARK: - Commands
