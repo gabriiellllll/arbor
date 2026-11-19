@@ -14,19 +14,19 @@ when merged-ready: implemented, tested, documented.
 - [x] README (install, Gatekeeper, Full Disk Access) and signing setup guide
 
 ## Phase 1 — Canvas and panels
-- [ ] Viewport model: pan, zoom around a point, zoom limits, reset (tested)
-- [ ] Canvas view: trackpad pan, space + drag, hand tool, pinch, ⌘+ / ⌘-, zoom % in toolbar, reset button
-- [ ] Canvas backgrounds: dots, grid, crosses, plain
-- [ ] Main window: left sidebar, canvas, collapsible right inspector
-- [ ] `getattrlistbulk` directory reader (tested on temporary trees)
-- [ ] Folder panel: title bar (icon, name, item count), sortable Name / Size / Modified columns
-- [ ] Panel resize and drag; list mode and icon mode
-- [ ] Panel tree model: open child, replace sibling branch, ⌘-click multiple branches (tested)
-- [ ] Bézier branch from the clicked row to the child panel; source row stays highlighted
-- [ ] Deep navigation: visible panel chain, auto-scroll to the active panel
-- [ ] Live folder updates via FSEvents
-- [ ] Full Disk Access detection, onboarding, degraded mode
-- [ ] UI tests: launch, open a folder, create a child panel
+- [x] Viewport model: pan, zoom around a point, zoom limits, reset (tested)
+- [x] Canvas view: trackpad pan, space + drag, hand tool, pinch, ⌘+ / ⌘-, zoom % in toolbar, reset button
+- [x] Canvas backgrounds: dots, grid, crosses, plain
+- [x] Main window: left sidebar, canvas, collapsible right inspector
+- [x] `getattrlistbulk` directory reader (tested on temporary trees)
+- [x] Folder panel: title bar (icon, name, item count), sortable Name / Size / Modified columns
+- [x] Panel resize and drag; list mode and icon mode
+- [x] Panel tree model: open child, replace sibling branch, ⌘-click multiple branches (tested)
+- [x] Bézier branch from the clicked row to the child panel; source row stays highlighted
+- [x] Deep navigation: visible panel chain, auto-scroll to the active panel
+- [x] Live folder updates via FSEvents
+- [x] Full Disk Access detection, onboarding, degraded mode
+- [x] UI tests: launch, open a folder, create a child panel
 
 ## Phase 2 — Layouts and colors
 - [ ] Layouts: tree right, tree down, star, manual (deterministic, tested)
