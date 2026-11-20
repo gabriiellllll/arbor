@@ -138,4 +138,50 @@ final class CanvasUITests: XCTestCase {
         app.outlines["sidebar"].staticTexts["Root"].click()
         XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 5))
     }
+
+    @MainActor
+    func testCopyPasteThenUndo() {
+        XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
+        row("notes.txt", in: "Root").click()
+        app.typeKey("c", modifierFlags: .command)
+        app.typeKey("v", modifierFlags: .command)
+        XCTAssertTrue(
+            row("notes 2.txt", in: "Root").waitForExistence(timeout: 5),
+            "pasting into the same folder keeps both"
+        )
+        app.typeKey("z", modifierFlags: .command)
+        let undone = NSPredicate(format: "exists == false")
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [expectation(for: undone, evaluatedWith: row("notes 2.txt", in: "Root"))], timeout: 5),
+            .completed
+        )
+    }
+
+    @MainActor
+    func testMoveToTrashThenUndo() {
+        XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
+        row("notes.txt", in: "Root").click()
+        app.typeKey(XCUIKeyboardKey.delete.rawValue, modifierFlags: .command)
+        let gone = NSPredicate(format: "exists == false")
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))], timeout: 5),
+            .completed
+        )
+        app.typeKey("z", modifierFlags: .command)
+        XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 5), "undo puts it back")
+    }
+
+    @MainActor
+    func testDraggingAFileOntoAFolderMovesIt() {
+        XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
+        row("notes.txt", in: "Root").press(forDuration: 0.6, thenDragTo: row("Beta", in: "Root"))
+        let gone = NSPredicate(format: "exists == false")
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))], timeout: 5),
+            .completed
+        )
+        row("Beta", in: "Root").click()
+        XCTAssertTrue(row("notes.txt", in: "Beta").waitForExistence(timeout: 5))
+        attachScreenshot("moved by drag")
+    }
 }
