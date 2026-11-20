@@ -76,6 +76,9 @@ schemes:
         Arbor: all
     test:
       gatherCoverageData: true
+      # The app's own code; dependencies such as GRDB would add ~100 MB to the result bundle.
+      coverageTargets:
+        - Arbor
       targets:
         - ArborTests
         - ArborUITests
