@@ -70,6 +70,21 @@ final class PanelDropTests: XCTestCase {
         XCTAssertEqual(dropped?.copying, true)
     }
 
+    /// AppKit finds drag and drop callbacks through the Objective-C runtime, not Swift.
+    func testDragAndDropCallbacksAreVisibleToAppKit() {
+        let selectors = [
+            #selector(NSTableViewDataSource.tableView(_:pasteboardWriterForRow:)),
+            #selector(NSTableViewDataSource.tableView(_:validateDrop:proposedRow:proposedDropOperation:)),
+            #selector(NSTableViewDataSource.tableView(_:acceptDrop:row:dropOperation:)),
+            NSSelectorFromString("collectionView:pasteboardWriterForItemAtIndexPath:"),
+            NSSelectorFromString("collectionView:validateDrop:proposedIndexPath:dropOperation:"),
+            NSSelectorFromString("collectionView:acceptDrop:indexPath:dropOperation:"),
+        ]
+        for selector in selectors {
+            XCTAssertTrue(panel.responds(to: selector), "\(selector) is not exposed to AppKit")
+        }
+    }
+
     func testDroppingItemsAlreadyHereIsRefused() {
         let inside = folder.appendingPathComponent("Sub")
         let drag = info(dragging: [inside], mask: [.copy, .move])
