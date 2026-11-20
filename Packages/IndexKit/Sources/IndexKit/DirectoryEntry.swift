@@ -20,10 +20,12 @@ public struct DirectoryEntry: Equatable, Sendable {
     public let fileID: UInt64
     /// Hidden by a leading dot or the `UF_HIDDEN` flag.
     public let isHidden: Bool
+    /// Another volume is mounted here (scans don't cross into it).
+    public let isMountPoint: Bool
 
     public init(
         name: String, kind: Kind, size: Int64, allocatedSize: Int64, itemCount: Int?,
-        created: Date, modified: Date, fileID: UInt64, isHidden: Bool
+        created: Date, modified: Date, fileID: UInt64, isHidden: Bool, isMountPoint: Bool = false
     ) {
         self.name = name
         self.kind = kind
@@ -34,5 +36,6 @@ public struct DirectoryEntry: Equatable, Sendable {
         self.modified = modified
         self.fileID = fileID
         self.isHidden = isHidden
+        self.isMountPoint = isMountPoint
     }
 }
