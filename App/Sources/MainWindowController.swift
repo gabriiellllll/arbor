@@ -161,6 +161,10 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         canvas.goForward()
     }
 
+    @objc func toggleSizeBars(_: Any?) {
+        canvas.showsSizeBars.toggle()
+    }
+
     @objc func compareSideBySide(_: Any?) {
         canvas.compareSelection()
     }
@@ -171,6 +175,8 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
             item.state = CanvasLayout.allCases.firstIndex(of: canvas.layout) == item.tag ? .on : .off
         case #selector(compareSideBySide(_:)):
             return canvas.canCompareSelection
+        case #selector(toggleSizeBars(_:)):
+            item.state = canvas.showsSizeBars ? .on : .off
         case #selector(goBack(_:)):
             return canvas.history.canGoBack
         case #selector(goForward(_:)):

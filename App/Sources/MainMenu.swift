@@ -130,6 +130,12 @@ extension MainMenu {
             action: #selector(MainWindowController.compareSideBySide(_:)),
             keyEquivalent: ""
         )
+        let sizeBars = menu.addItem(
+            withTitle: String(localized: "Show Size Bars"),
+            action: #selector(MainWindowController.toggleSizeBars(_:)),
+            keyEquivalent: "b"
+        )
+        sizeBars.keyEquivalentModifierMask = [.command, .option]
         let background = NSMenuItem(title: String(localized: "Background"), action: nil, keyEquivalent: "")
         background.submenu = backgroundMenu()
         menu.addItem(background)

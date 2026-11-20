@@ -78,14 +78,25 @@ enum TagColors {
     }
 }
 
-/// Highlights a selected row in the branch color.
+/// Highlights a selected row in the branch color, and draws its size bar.
 @MainActor
 final class TintedRowView: NSTableRowView {
     private let tint: NSColor
+    /// Length of the size bar, 0 to 1 of the row width (0: no bar).
+    let sizeFraction: Double
 
-    init(tint: NSColor) {
+    init(tint: NSColor, sizeFraction: Double = 0) {
         self.tint = tint
+        self.sizeFraction = sizeFraction
         super.init(frame: .zero)
+    }
+
+    override func drawBackground(in dirtyRect: NSRect) {
+        super.drawBackground(in: dirtyRect)
+        guard sizeFraction > 0 else { return }
+        let bar = CGRect(x: 0, y: 0, width: bounds.width * sizeFraction, height: bounds.height).insetBy(dx: 0, dy: 1)
+        tint.withAlphaComponent(0.18).setFill()
+        NSBezierPath(roundedRect: bar, xRadius: 3, yRadius: 3).fill()
     }
 
     @available(*, unavailable)
