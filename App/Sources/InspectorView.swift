@@ -1,3 +1,4 @@
+import FileOpsKit
 import Observation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -33,6 +34,10 @@ struct InspectorView: View {
                         row("Created", item.entry.created.formatted(date: .abbreviated, time: .shortened))
                         row("Modified", item.entry.modified.formatted(date: .abbreviated, time: .shortened))
                         row("Where", item.url.deletingLastPathComponent().path)
+                        let tags = (try? FinderTags.tags(of: item.url)) ?? []
+                        if !tags.isEmpty {
+                            row("Tags", tags.joined(separator: ", "))
+                        }
                     }
                     .font(.callout)
                 }
