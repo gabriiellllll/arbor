@@ -4,8 +4,17 @@ import Foundation
 /// A directory reported as changed by FSEvents.
 public struct FolderChange: Hashable, Sendable {
     public let path: String
-    /// The system dropped events: everything below `path` must be rescanned.
+    /// Events were lost (dropped, history wrapped, watched root moved): everything below
+    /// `path` must be rescanned.
     public let mustRescanSubfolders: Bool
+    /// FSEvents event ID, to resume from after a relaunch (0 when unknown).
+    public let eventID: UInt64
+
+    public init(path: String, mustRescanSubfolders: Bool, eventID: UInt64 = 0) {
+        self.path = path
+        self.mustRescanSubfolders = mustRescanSubfolders
+        self.eventID = eventID
+    }
 }
 
 /// Watches directory trees with FSEvents and reports which directories changed.
@@ -38,13 +47,27 @@ public final class FolderWatcher: @unchecked Sendable {
         stopStream()
     }
 
-    /// Replaces the set of watched paths. An empty set stops watching.
-    public func watch(_ paths: Set<String>) {
+    /// Replaces the set of watched paths. An empty set stops watching. With `since`, changes
+    /// made after that event ID (even while the app was not running) are reported first.
+    public func watch(_ paths: Set<String>, since eventID: UInt64? = nil) {
         queue.sync {
             stopStream()
             guard !paths.isEmpty else { return }
-            startStream(paths: Array(paths))
+            startStream(paths: Array(paths), since: eventID)
         }
+    }
+
+    /// The latest FSEvents event ID: record it before a scan, and resume from it.
+    public static var currentEventID: UInt64 {
+        FSEventsGetCurrentEventId()
+    }
+
+    /// Identifies the FSEvents history of the volume holding `path`. Event IDs only make
+    /// sense for the same history: if it changes, the index must be rebuilt.
+    public static func volumeUUID(for path: String) -> String? {
+        var info = stat()
+        guard stat(path, &info) == 0, let uuid = FSEventsCopyUUIDForDevice(info.st_dev) else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String?
     }
 
     /// The path FSEvents reports for `url`: symlinks resolved, including `/var` → `/private/var`
@@ -60,7 +83,7 @@ public final class FolderWatcher: @unchecked Sendable {
         path.count > 1 && path.hasSuffix("/") ? String(path.dropLast()) : path
     }
 
-    private func startStream(paths: [String]) {
+    private func startStream(paths: [String], since eventID: UInt64?) {
         var context = FSEventStreamContext(
             version: 0,
             info: Unmanaged.passUnretained(callback).toOpaque(),
@@ -75,10 +98,10 @@ public final class FolderWatcher: @unchecked Sendable {
             },
             copyDescription: nil
         )
-        let flags = FSEventStreamCreateFlags(kFSEventStreamCreateFlagNoDefer)
+        let flags = FSEventStreamCreateFlags(kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagWatchRoot)
         guard let stream = FSEventStreamCreate(
             nil, FolderWatcher.streamCallback, &context, paths as CFArray,
-            FSEventStreamEventId(kFSEventStreamEventIdSinceNow), latency, flags
+            eventID ?? FSEventStreamEventId(kFSEventStreamEventIdSinceNow), latency, flags
         ) else { return }
         FSEventStreamSetDispatchQueue(stream, queue)
         FSEventStreamStart(stream)
@@ -93,17 +116,26 @@ public final class FolderWatcher: @unchecked Sendable {
         self.stream = nil
     }
 
-    private static let streamCallback: FSEventStreamCallback = { _, info, count, paths, flags, _ in
+    private static let streamCallback: FSEventStreamCallback = { _, info, count, paths, flags, ids in
         guard let info else { return }
         let callback = Unmanaged<Callback>.fromOpaque(info).takeUnretainedValue()
         let cPaths = paths.assumingMemoryBound(to: UnsafePointer<CChar>.self)
-        let rescan = FSEventStreamEventFlags(kFSEventStreamEventFlagMustScanSubDirs)
-        let changes = (0 ..< count).map { index in
-            FolderChange(
+        let historyDone = FSEventStreamEventFlags(kFSEventStreamEventFlagHistoryDone)
+        let rescan = FSEventStreamEventFlags(
+            kFSEventStreamEventFlagMustScanSubDirs | kFSEventStreamEventFlagEventIdsWrapped
+                | kFSEventStreamEventFlagRootChanged
+        )
+        let changes = (0 ..< count).compactMap { index -> FolderChange? in
+            // The marker ending the replay of past events is not a change.
+            guard flags[index] & historyDone == 0 else { return nil }
+            return FolderChange(
                 path: normalized(String(cString: cPaths[index])),
-                mustRescanSubfolders: flags[index] & rescan != 0
+                mustRescanSubfolders: flags[index] & rescan != 0,
+                eventID: ids[index]
             )
         }
-        callback.handler(changes)
+        if !changes.isEmpty {
+            callback.handler(changes)
+        }
     }
 }
