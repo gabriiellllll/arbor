@@ -174,12 +174,18 @@ final class CanvasUITests: XCTestCase {
     @MainActor
     func testDraggingAFileOntoAFolderMovesIt() {
         XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
-        row("notes.txt", in: "Root").press(forDuration: 0.6, thenDragTo: row("Beta", in: "Root"))
+        row("notes.txt", in: "Root").click(forDuration: 0.6, thenDragTo: row("Beta", in: "Root"))
         let gone = NSPredicate(format: "exists == false")
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))], timeout: 5),
-            .completed
+        let moved = XCTWaiter.wait(
+            for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))],
+            timeout: 5
         )
+        if moved != .completed {
+            // Leaves evidence in the CI log and result bundle.
+            attachScreenshot("drag not applied")
+            print(app.windows["main"].debugDescription)
+        }
+        XCTAssertEqual(moved, .completed)
         row("Beta", in: "Root").click()
         XCTAssertTrue(row("notes.txt", in: "Beta").waitForExistence(timeout: 5))
         attachScreenshot("moved by drag")
