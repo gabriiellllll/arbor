@@ -41,4 +41,10 @@ final class FolderItemTests: XCTestCase {
         let items = [item("old", modified: 1), item("new", modified: 9)]
         XCTAssertEqual(items.sorted(by: .modified, ascending: false).map(\.name), ["new", "old"])
     }
+
+    func testFoldersSortByTheirIndexedSize() {
+        let items = [item("big", kind: .directory), item("small", kind: .directory), item("file", size: 50)]
+        let sorted = items.sorted(by: .size, ascending: false, folderSizes: ["big": 1000, "small": 10])
+        XCTAssertEqual(sorted.map(\.name), ["big", "file", "small"])
+    }
 }
