@@ -16,6 +16,9 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: YES
 packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "7.12.0"
   CanvasKit: { path: Packages/CanvasKit }
   IndexKit: { path: Packages/IndexKit }
   FileOpsKit: { path: Packages/FileOpsKit }
@@ -30,6 +33,7 @@ targets:
       - App/Sources
       - App/Resources
     dependencies:
+      - package: GRDB
       - package: CanvasKit
       - package: IndexKit
       - package: FileOpsKit
