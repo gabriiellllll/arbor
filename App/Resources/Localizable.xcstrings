@@ -30,6 +30,9 @@
     "Actual Size" : {
 
     },
+    "Add to Favorites" : {
+
+    },
     "Arbor" : {
       "comment" : "Main window title"
     },
@@ -45,13 +48,28 @@
     "Background" : {
 
     },
+    "Blue" : {
+
+    },
+    "Brown" : {
+
+    },
+    "Cancel" : {
+
+    },
     "Close" : {
       "comment" : "Window menu item"
     },
     "Close Panel" : {
 
     },
+    "Color" : {
+
+    },
     "Compare Side by Side" : {
+
+    },
+    "Computer" : {
 
     },
     "Continue in Limited Mode" : {
@@ -63,7 +81,19 @@
     "Crosses" : {
 
     },
+    "Delete" : {
+
+    },
+    "Delete Workspace…" : {
+
+    },
+    "Delete the workspace “%@”?" : {
+
+    },
     "Dots" : {
+
+    },
+    "Favorites" : {
 
     },
     "File" : {
@@ -78,6 +108,9 @@
     "Grant Access…" : {
 
     },
+    "Green" : {
+
+    },
     "Grid" : {
 
     },
@@ -88,6 +121,12 @@
       "comment" : "App menu item"
     },
     "Icons" : {
+
+    },
+    "Indigo" : {
+
+    },
+    "Its canvas will be lost. Your files are not affected." : {
 
     },
     "Kind" : {
@@ -102,6 +141,9 @@
     "List" : {
 
     },
+    "Locations" : {
+
+    },
     "Manual" : {
 
     },
@@ -111,7 +153,13 @@
     "Modified" : {
 
     },
+    "My Workspace" : {
+
+    },
     "Name" : {
+
+    },
+    "New Workspace" : {
 
     },
     "No Selection" : {
@@ -135,13 +183,28 @@
     "Open System Settings › Privacy & Security › Full Disk Access." : {
 
     },
+    "Orange" : {
+
+    },
+    "Pink" : {
+
+    },
     "Plain" : {
+
+    },
+    "Purple" : {
 
     },
     "Quit Arbor" : {
       "comment" : "App menu item"
     },
     "Quit and reopen Arbor." : {
+
+    },
+    "Remove from Favorites" : {
+
+    },
+    "Rename" : {
 
     },
     "Show Inspector" : {
@@ -154,6 +217,12 @@
 
     },
     "Star" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Teal" : {
 
     },
     "This folder can’t be read: %@" : {
@@ -180,6 +249,12 @@
     "Window" : {
       "comment" : "Window menu title"
     },
+    "Workspace %lld" : {
+
+    },
+    "Workspaces" : {
+
+    },
     "Zoom" : {
 
     },
@@ -187,6 +262,9 @@
 
     },
     "Zoom Out" : {
+
+    },
+    "iCloud Drive" : {
 
     }
   },
