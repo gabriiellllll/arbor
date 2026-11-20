@@ -43,7 +43,10 @@ public final class IndexStore: Sendable {
     /// WAL database: the UI reads while scans write.
     public static func open(at url: URL) throws -> IndexStore {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        return try IndexStore(DatabasePool(path: url.path))
+        var configuration = Configuration()
+        // Another connection may be finishing a write (a second app instance, a closing store).
+        configuration.busyMode = .timeout(5)
+        return try IndexStore(DatabasePool(path: url.path, configuration: configuration))
     }
 
     public static func inMemory() throws -> IndexStore {

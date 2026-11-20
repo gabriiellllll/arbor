@@ -77,9 +77,11 @@ public final class IndexCoordinator: @unchecked Sendable {
         }
     }
 
+    /// Stops watching and cancels a running scan, then waits for work in progress to end.
     public func stop() {
         control.cancel()
         watcher.watch([])
+        queue.sync {}
     }
 
     /// Scans the roots that need it, one volume per thread, then watches all roots.
