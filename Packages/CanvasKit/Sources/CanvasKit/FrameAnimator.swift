@@ -8,8 +8,12 @@ public final class FrameAnimator {
     public static let duration: TimeInterval = 0.35
 
     private var timer: Timer?
+    /// The clock; tests pass a fake one to step through an animation deterministically.
+    private let now: () -> Date
 
-    public init() {}
+    public init(now: @escaping () -> Date = Date.init) {
+        self.now = now
+    }
 
     /// Ease in-out (cubic).
     public nonisolated static func eased(_ progress: Double) -> Double {
@@ -54,7 +58,7 @@ public final class FrameAnimator {
             apply(targets)
             return
         }
-        run = Run(began: Date(), duration: duration, start: start, targets: targets, apply: apply)
+        run = Run(began: now(), duration: duration, start: start, targets: targets, apply: apply)
         let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
@@ -62,9 +66,10 @@ public final class FrameAnimator {
         self.timer = timer
     }
 
-    private func tick() {
+    /// One animation step (called by the timer).
+    func tick() {
         guard let run else { return }
-        let progress = Self.eased(Date().timeIntervalSince(run.began) / run.duration)
+        let progress = Self.eased(now().timeIntervalSince(run.began) / run.duration)
         guard progress < 1 else {
             timer?.invalidate()
             timer = nil
