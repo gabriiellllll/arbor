@@ -8,7 +8,7 @@ import SwiftUI
 final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuItemValidation {
     private static let backgroundDefaultsKey = "canvasBackground"
 
-    private let split = MainSplitViewController()
+    private let split: MainSplitViewController
     private let zoomLabel = NSTextField(labelWithString: "100 %")
     private let handButton = NSButton()
 
@@ -19,7 +19,8 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
         split.canvas
     }
 
-    init() {
+    init(database: AppDatabase) {
+        split = MainSplitViewController(database: database)
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1400, height: 860),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -52,6 +53,15 @@ final class MainWindowController: NSWindowController, NSToolbarDelegate, NSMenuI
 
     func openFolder(_ url: URL) {
         canvas.openRoot(url)
+    }
+
+    /// Saves the current workspace (on quit).
+    func saveWorkspace() {
+        split.saveWorkspace()
+    }
+
+    @objc func newWorkspace(_: Any?) {
+        split.createWorkspace()
     }
 
     /// Checks Full Disk Access (at launch and whenever the app becomes active): limited mode

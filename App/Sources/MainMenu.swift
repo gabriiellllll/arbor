@@ -49,6 +49,12 @@ enum MainMenu {
 extension MainMenu {
     static func fileMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "File"))
+        let workspace = menu.addItem(
+            withTitle: String(localized: "New Workspace"),
+            action: #selector(MainWindowController.newWorkspace(_:)),
+            keyEquivalent: "n"
+        )
+        workspace.keyEquivalentModifierMask = [.command, .control]
         menu.addItem(
             withTitle: String(localized: "Open Folder…"),
             action: #selector(MainWindowController.openDocument(_:)),
