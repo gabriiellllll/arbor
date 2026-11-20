@@ -101,6 +101,10 @@ Release builds use the stable self-signed certificate (see `docs/signing.md`).
 - TDD for IndexKit, FileOpsKit and the rename logic: tests with or before the code.
 - Integration tests only touch temporary directories (`FileManager.default.temporaryDirectory`
   + UUID), never real user files.
+- Tests never use the real Trash: pass a fake trash to `FileOperationRunner(trash:)` (see
+  `Sandbox` in FileOpsKit tests and `UITestFixture.trash(in:)`). App unit tests run inside
+  the app, which then opens no window and touches no user data; give controllers a
+  throwaway `UserDefaults` suite and an in-memory `AppDatabase`.
 - Priorities: index scan on generated trees, size propagation, simulated FSEvents
   catch-up; file ops (conflicts, undo); rename preview (regex, numbering, collisions);
   canvas layouts (deterministic positions, no overlap); backup (encryption round trip,
