@@ -16,7 +16,8 @@ public final class IndexCoordinator: @unchecked Sendable {
     private let queue = DispatchQueue(label: "app.arbor.IndexCoordinator", qos: .utility)
     private let control = ScanControl()
     private lazy var watcher = FolderWatcher(latency: 1) { [weak self] changes in
-        self?.queue.async { self?.apply(changes) }
+        guard let self else { return }
+        queue.async { self.apply(changes) }
     }
 
     public init(store: IndexStore) {
