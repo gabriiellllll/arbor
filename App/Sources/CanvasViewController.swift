@@ -26,8 +26,9 @@ final class CanvasViewController: NSViewController {
         didSet { layoutDidChange(from: oldValue) }
     }
 
-    var tree = PanelTree<URL>()
+    var tree = PanelTree<PanelContent>()
     var panels: [PanelID: FolderPanelController] = [:]
+    var searchPanels: [PanelID: SearchPanelController] = [:]
     /// Palette index of each root; descendants use their root's color.
     var rootColors: [PanelID: Int] = [:]
     var compare: CompareSession?
@@ -46,6 +47,8 @@ final class CanvasViewController: NSViewController {
     var onAddFavorites: (([URL]) -> Void)?
     /// A file operation to run, with its undo name.
     var onPerform: ((FileOperation, String) -> Void)?
+    /// Searches and Finder tags.
+    weak var index: IndexService?
     /// Indexed sizes of a folder's items (canonical path), by name.
     var sizeLookup: ((String) -> [String: Int64])?
     static let sizeBarsDefaultsKey = "sizeBars"
@@ -69,6 +72,9 @@ final class CanvasViewController: NSViewController {
     var activePanel: PanelID? {
         didSet {
             for (id, panel) in panels {
+                panel.panelView.isActive = id == activePanel
+            }
+            for (id, panel) in searchPanels {
                 panel.panelView.isActive = id == activePanel
             }
         }
@@ -128,7 +134,7 @@ final class CanvasViewController: NSViewController {
     /// it is already open as a root.
     func openRoot(_ url: URL, colorIndex: Int? = nil) {
         if let existing = tree.roots
-            .first(where: { tree[$0]?.content.standardizedFileURL == url.standardizedFileURL && !isCompared($0) })
+            .first(where: { tree[$0]?.content == .folder(url.standardizedFileURL) && !isCompared($0) })
         {
             activate(existing, reveal: true)
             recordVisit(existing)
@@ -142,16 +148,22 @@ final class CanvasViewController: NSViewController {
 
     /// Adds a root panel near the top-left of the visible area.
     func addRoot(_ url: URL, colorIndex: Int?) -> PanelID {
+        let (id, frame) = addRoot(.folder(url.standardizedFileURL), size: Self.panelSize, colorIndex: colorIndex)
+        addPanel(id, url: url, frame: frame)
+        return id
+    }
+
+    /// A new root in the tree, near the top-left of the visible area.
+    func addRoot(_ content: PanelContent, size: CGSize, colorIndex: Int?) -> (PanelID, CGRect) {
         let visible = canvasView.visibleCanvasRect
         let origin = CGPoint(
             x: visible.minX + 40 / canvasView.magnification,
             y: visible.minY + 40 / canvasView.magnification
         )
-        let frame = PanelPlacement.frame(at: origin, size: Self.panelSize, avoiding: tree.panels.values.map(\.frame))
-        let id = tree.addRoot(content: url, frame: frame)
+        let frame = PanelPlacement.frame(at: origin, size: size, avoiding: tree.panels.values.map(\.frame))
+        let id = tree.addRoot(content: content, frame: frame)
         rootColors[id] = colorIndex ?? BranchPalette.nextIndex(used: Array(rootColors.values))
-        addPanel(id, url: url, frame: frame)
-        return id
+        return (id, frame)
     }
 
     private func addPanel(_ id: PanelID, url: URL, frame proposed: CGRect) {
@@ -205,7 +217,7 @@ final class CanvasViewController: NSViewController {
             folders = Array(folders.prefix(1))
         }
         var occupied = tree.panels.values.map(\.frame)
-        let result = tree.syncChildren(of: id, to: folders.map { ($0.name, $0.url) }) { parentPanel, key in
+        let result = tree.syncChildren(of: id, to: folders.map { ($0.name, .folder($0.url)) }) { parentPanel, key in
             let sourceY = parent.branchSourceY(forName: key) ?? parentPanel.frame.minY
             let frame = PanelPlacement.childFrame(
                 parent: parentPanel.frame, sourceY: sourceY, size: Self.panelSize, avoiding: occupied
@@ -215,8 +227,8 @@ final class CanvasViewController: NSViewController {
         }
         removePanels(result.removed)
         for added in result.added {
-            if let panel = tree[added] {
-                addPanel(added, url: panel.content, frame: panel.frame)
+            if let panel = tree[added], case let .folder(url) = panel.content {
+                addPanel(added, url: url, frame: panel.frame)
             }
         }
         // Reloads also report selection: only the active panel drives the inspector.
@@ -237,7 +249,7 @@ final class CanvasViewController: NSViewController {
         }
     }
 
-    private func closePanel(_ id: PanelID) {
+    func closePanel(_ id: PanelID) {
         guard let panel = tree[id] else { return }
         if let parentID = panel.parent, let parent = panels[parentID], let key = panel.sourceKey {
             // Closing a child is deselecting its row in the parent.
@@ -257,6 +269,7 @@ final class CanvasViewController: NSViewController {
         guard !ids.isEmpty else { return }
         for id in ids {
             panels.removeValue(forKey: id)?.panelView.removeFromSuperview()
+            searchPanels.removeValue(forKey: id)?.panelView.removeFromSuperview()
             manualFrames[id] = nil
         }
         updateWatchedFolders()
@@ -279,6 +292,9 @@ final class CanvasViewController: NSViewController {
     func indexChanged() {
         for panel in panels.values {
             panel.refreshSizes()
+        }
+        for panel in searchPanels.values {
+            panel.refresh()
         }
     }
 

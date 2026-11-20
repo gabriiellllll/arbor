@@ -23,7 +23,7 @@ extension CanvasViewController {
     }
 
     func currentFrames() -> [PanelID: CGRect] {
-        panels.mapValues(\.panelView.frame)
+        panels.mapValues(\.panelView.frame).merging(searchPanels.mapValues(\.panelView.frame)) { $1 }
     }
 
     /// Arranges panels for the current layout (animated), then reveals `id` if given.
@@ -76,7 +76,7 @@ extension CanvasViewController {
 
     private func apply(_ frames: [PanelID: CGRect]) {
         for (id, frame) in frames {
-            panels[id]?.panelView.frame = frame
+            (panels[id]?.panelView ?? searchPanels[id]?.panelView)?.frame = frame
             tree.setFrame(frame, for: id)
         }
         updateBranches()
@@ -85,7 +85,7 @@ extension CanvasViewController {
     // MARK: - Dragging
 
     func panelDragged(_ id: PanelID) {
-        guard let frame = panels[id]?.panelView.frame else { return }
+        guard let frame = (panels[id]?.panelView ?? searchPanels[id]?.panelView)?.frame else { return }
         let moved = frame.origin != tree[id]?.frame.origin
         tree.setFrame(frame, for: id)
         updateBranches()

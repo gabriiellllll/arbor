@@ -4,8 +4,10 @@ import CanvasKit
 /// What a workspace remembers of its canvas.
 struct CanvasSnapshot: Codable, Equatable {
     struct Root: Codable, Equatable {
+        /// Empty for a search panel.
         var path: String
         var colorIndex: Int
+        var search: SearchSpec?
     }
 
     var layout: CanvasLayout = .treeRight
@@ -29,7 +31,11 @@ extension CanvasViewController {
         )
         let comparedRoots = compare.map { [$0.left, $0.right] } ?? []
         snapshot.roots = tree.roots.filter { !comparedRoots.contains($0) }.compactMap { id in
-            tree[id].map { CanvasSnapshot.Root(path: $0.content.path, colorIndex: rootColors[id] ?? 0) }
+            let color = rootColors[id] ?? 0
+            if let search = searchPanels[id] {
+                return CanvasSnapshot.Root(path: "", colorIndex: color, search: search.spec)
+            }
+            return panels[id].map { CanvasSnapshot.Root(path: $0.url.path, colorIndex: color) }
         }
         for panel in panels.values {
             let names = panel.selectedItems.filter(\.isFolder).map(\.name)
@@ -38,8 +44,8 @@ extension CanvasViewController {
             }
             snapshot.frames[panel.url.path] = panel.panelView.frame
         }
-        if let compare, let left = tree[compare.left], let right = tree[compare.right] {
-            snapshot.compared = [left.content.path, right.content.path]
+        if let compare, let left = panels[compare.left], let right = panels[compare.right] {
+            snapshot.compared = [left.url.path, right.url.path]
         }
         return snapshot
     }
@@ -65,7 +71,11 @@ extension CanvasViewController {
         canvasView.scroll(toCanvasOrigin: snapshot.visibleOrigin)
 
         for root in snapshot.roots {
-            _ = addRoot(URL(fileURLWithPath: root.path, isDirectory: true), colorIndex: root.colorIndex)
+            if let search = root.search {
+                _ = addSearch(search, colorIndex: root.colorIndex)
+            } else {
+                _ = addRoot(URL(fileURLWithPath: root.path, isDirectory: true), colorIndex: root.colorIndex)
+            }
         }
         if let paths = snapshot.compared, paths.count == 2 {
             let left = addRoot(URL(fileURLWithPath: paths[0], isDirectory: true), colorIndex: nil)
