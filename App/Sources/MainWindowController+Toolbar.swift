@@ -15,13 +15,14 @@ extension MainWindowController: NSToolbarDelegate {
         static let back = NSToolbarItem.Identifier("back")
         static let forward = NSToolbarItem.Identifier("forward")
         static let openFolder = NSToolbarItem.Identifier("openFolder")
+        static let search = NSToolbarItem.Identifier("search")
     }
 
     func toolbarDefaultItemIdentifiers(_: NSToolbar) -> [NSToolbarItem.Identifier] {
         [
             .toggleSidebar, .sidebarTrackingSeparator, Item.back, Item.forward, Item.openFolder, .flexibleSpace,
             Item.hand, Item.zoomOut, Item.zoomLevel, Item.zoomIn, Item.zoomReset, Item.layout, Item.background,
-            Item.operations,
+            Item.operations, Item.search,
             .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector,
         ]
     }
@@ -42,6 +43,7 @@ extension MainWindowController: NSToolbarDelegate {
         case Item.background: return backgroundItem()
         case Item.layout: return layoutItem()
         case Item.operations: return operationsItem()
+        case Item.search: return makeSearchItem()
         default: return nil
         }
     }
@@ -127,6 +129,24 @@ extension MainWindowController: NSToolbarDelegate {
         item.menu = MainMenu.layoutMenu()
         item.showsIndicator = true
         return item
+    }
+
+    private func makeSearchItem() -> NSToolbarItem {
+        let item = NSSearchToolbarItem(itemIdentifier: Item.search)
+        item.searchField.placeholderString = String(localized: "Search the Index")
+        item.searchField.target = self
+        item.searchField.action = #selector(searchFieldChanged(_:))
+        item.searchField.setAccessibilityIdentifier("searchField")
+        searchItem = item
+        return item
+    }
+
+    @objc func searchFieldChanged(_ sender: NSSearchField) {
+        canvas.search(text: sender.stringValue)
+    }
+
+    @objc func focusSearch(_: Any?) {
+        searchItem?.beginSearchInteraction()
     }
 
     private func backgroundItem() -> NSToolbarItem {
