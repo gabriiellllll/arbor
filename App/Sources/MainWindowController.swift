@@ -1,5 +1,6 @@
 import AppKit
 import CanvasKit
+import FileOpsKit
 import SwiftUI
 
 /// The main window: sidebar, canvas, inspector and toolbar. Menu and toolbar commands land
@@ -9,19 +10,23 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
     private static let backgroundDefaultsKey = "canvasBackground"
 
     private let split: MainSplitViewController
+    let operations: FileOperationsController
+    let operationsButton = NSButton()
+    let operationsPopover = NSPopover()
     let zoomLabel = NSTextField(labelWithString: "100 %")
     let handButton = NSButton()
 
     private let onboarding = AccessOnboarding(defaults: .standard)
     private var onboardingSheet: NSViewController?
 
-    private var canvas: CanvasViewController {
+    var canvas: CanvasViewController {
         split.canvas
     }
 
-    init(database: AppDatabase) {
+    init(database: AppDatabase, runner: FileOperationRunner) {
         split = MainSplitViewController(database: database)
-        let window = NSWindow(
+        operations = FileOperationsController(runner: runner)
+        let window = MainWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1400, height: 860),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
@@ -44,6 +49,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         canvas.canvasView.background = saved.flatMap(CanvasBackground.init(rawValue:)) ?? .dots
         canvas.onViewportChange = { [weak self] in self?.updateZoomLabel() }
         updateZoomLabel()
+        setUpFileOperations(in: window)
     }
 
     @available(*, unavailable)
@@ -167,7 +173,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         case #selector(toggleHandTool(_:)):
             item.state = canvas.canvasView.isHandToolActive ? .on : .off
         default:
-            break
+            return validateFileCommand(item)
         }
         return true
     }

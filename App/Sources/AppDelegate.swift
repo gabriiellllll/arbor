@@ -1,4 +1,5 @@
 import AppKit
+import FileOpsKit
 
 @main
 @MainActor
@@ -27,7 +28,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             NSApp.presentError(error)
         }
-        let controller = MainWindowController(database: openDatabase(favorites: fixture.map { [$0] }))
+        let controller = MainWindowController(
+            database: openDatabase(favorites: fixture.map { [$0] }),
+            runner: FileOperationRunner(trash: fixture.map(UITestFixture.trash(in:)) ?? FileOperationRunner.systemTrash)
+        )
         controller.showWindow(nil)
         windowController = controller
         NSApp.activate()

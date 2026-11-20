@@ -26,6 +26,7 @@ enum MainMenu {
         )
         main.addItem(submenu: appMenu)
         main.addItem(submenu: fileMenu())
+        main.addItem(submenu: editMenu())
         main.addItem(submenu: viewMenu())
         main.addItem(submenu: goMenu())
 
@@ -48,6 +49,33 @@ enum MainMenu {
 }
 
 extension MainMenu {
+    static func editMenu() -> NSMenu {
+        let menu = NSMenu(title: String(localized: "Edit"))
+        menu.addItem(withTitle: String(localized: "Undo"), action: #selector(MainWindow.undo(_:)), keyEquivalent: "z")
+        let redo = menu.addItem(
+            withTitle: String(localized: "Redo"),
+            action: #selector(MainWindow.redo(_:)),
+            keyEquivalent: "z"
+        )
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        menu.addItem(.separator())
+        menu.addItem(withTitle: String(localized: "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        menu.addItem(withTitle: String(localized: "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        menu.addItem(withTitle: String(localized: "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        let moveHere = menu.addItem(
+            withTitle: String(localized: "Move Item Here"),
+            action: #selector(MainWindowController.moveItemHere(_:)),
+            keyEquivalent: "v"
+        )
+        moveHere.keyEquivalentModifierMask = [.command, .option]
+        menu.addItem(
+            withTitle: String(localized: "Select All"),
+            action: #selector(NSText.selectAll(_:)),
+            keyEquivalent: "a"
+        )
+        return menu
+    }
+
     static func fileMenu() -> NSMenu {
         let menu = NSMenu(title: String(localized: "File"))
         let workspace = menu.addItem(
@@ -61,6 +89,17 @@ extension MainMenu {
             action: #selector(MainWindowController.openDocument(_:)),
             keyEquivalent: "o"
         )
+        menu.addItem(.separator())
+        menu.addItem(
+            withTitle: String(localized: "Rename"), action: #selector(MainWindowController.renameItem(_:)),
+            keyEquivalent: ""
+        )
+        let trash = menu.addItem(
+            withTitle: String(localized: "Move to Trash"),
+            action: #selector(MainWindowController.moveToTrash(_:)),
+            keyEquivalent: "\u{8}"
+        )
+        trash.keyEquivalentModifierMask = [.command]
         return menu
     }
 
