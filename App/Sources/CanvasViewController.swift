@@ -1,5 +1,6 @@
 import AppKit
 import CanvasKit
+import FileOpsKit
 import IndexKit
 import SwiftUI
 
@@ -43,6 +44,8 @@ final class CanvasViewController: NSViewController {
     var pendingFrames: [String: CGRect] = [:]
     /// "Add to Favorites" was chosen in a panel.
     var onAddFavorites: (([URL]) -> Void)?
+    /// A file operation to run, with its undo name.
+    var onPerform: ((FileOperation, String) -> Void)?
     /// Folders opened, for Back and Forward.
     var history = NavigationHistory<String>()
     /// Set while Back or Forward reopens a folder, so it is not recorded again.
@@ -145,7 +148,10 @@ final class CanvasViewController: NSViewController {
         panel.onSelectionChange = { [weak self] items in self?.selectionChanged(in: id, to: items) }
         panel.onRowsMoved = { [weak self] in self?.updateBranches() }
         panel.onClose = { [weak self] in self?.closePanel(id) }
-        panel.panelView.onActivate = { [weak self] in self?.activate(id, reveal: false) }
+        panel.panelView.onActivate = { [weak self] in self?.panelClicked(id) }
+        panel
+            .onDropFiles = { [weak self] urls, folder, copying in self?.transfer(urls, into: folder, copying: copying) }
+        panel.onRename = { [weak self] url, name in self?.rename(url, to: name) }
         panel.panelView.onFrameChanging = { [weak self] in self?.panelDragged(id) }
         panel.panelView.onFrameChanged = { [weak self] in self?.panelDragEnded(id) }
         panels[id] = panel
