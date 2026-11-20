@@ -9,4 +9,4 @@ line_length:
   warning: 120
   ignores_comments: true
 identifier_name:
-  excluded: [x, y, dx, dy, id, xs, ys]   # geometry code
+  excluded: [x, y, dx, dy, id, xs, ys, db]   # geometry code, GRDB database handles
