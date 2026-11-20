@@ -90,6 +90,50 @@ final class IndexCoordinatorTests: XCTestCase {
         XCTAssertTrue(try store.roots().allSatisfy { $0.scannedAt != nil })
     }
 
+    /// Runs `action`, then waits until `condition` holds after a change notification. The
+    /// listener is in place before the action starts, so no notification is missed.
+    private func waitForChange(
+        _ coordinator: IndexCoordinator, after action: () -> Void, until condition: @escaping @Sendable () -> Bool
+    ) {
+        let done = expectation(description: "condition met")
+        done.assertForOverFulfill = false
+        coordinator.onChange = { _ in
+            if condition() {
+                done.fulfill()
+            }
+        }
+        action()
+        wait(for: [done], timeout: 15)
+    }
+
+    func testRootsCanBeAddedRemovedAndReExcludedWhileRunning() throws {
+        try temp.file("data/sub/b.bin", size: 30)
+        let store = try IndexStore.open(at: databaseURL)
+        let path = dataPath
+        let coordinator = IndexCoordinator(store: store)
+        coordinator.start()
+
+        waitForChange(
+            coordinator, after: { coordinator.addRoot(path: path, exclusions: []) },
+            until: { Self.total(store, path) == 40 }
+        )
+        let root = try XCTUnwrap(store.roots().first)
+        XCTAssertEqual(try store.summary(of: root).items, 3, "a.txt, sub, sub/b.bin")
+
+        waitForChange(
+            coordinator, after: { coordinator.setExclusions(root.id, [path + "/sub"]) },
+            until: { Self.total(store, path) == 10 }
+        )
+        XCTAssertNil(try store.itemID(forPath: path + "/sub"))
+
+        waitForChange(
+            coordinator, after: { coordinator.removeRoot(root.id) },
+            until: { (try? store.roots().isEmpty) == true }
+        )
+        XCTAssertEqual(try store.itemCount(), 0)
+        coordinator.stop()
+    }
+
     func testANewRootOrAnotherEventHistoryNeedsAScan() throws {
         let store = try IndexStore.inMemory()
         let root = try store.addRoot(path: temp.url.path, exclusions: [])
