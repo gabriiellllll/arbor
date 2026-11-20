@@ -147,4 +147,30 @@ final class CanvasControllerTests: XCTestCase {
         XCTAssertNil(controller.panels[compare.left])
         XCTAssertNil(controller.panels[compare.right])
     }
+
+    func testSnapshotRestoresRootsBranchesLayoutAndColors() throws {
+        let rootPanel = try XCTUnwrap(openRootAndWait())
+        rootPanel.select(names: ["Alpha"])
+        controller.layout = .treeDown
+        let rootID = try XCTUnwrap(panel(named: "Root")).id
+        let color = controller.rootColors[rootID]
+        let data = try JSONEncoder().encode(controller.snapshot())
+
+        let restored = CanvasViewController(defaults: defaults)
+        restored.loadView()
+        restored.view.frame = CGRect(x: 0, y: 0, width: 1200, height: 800)
+        try restored.restore(JSONDecoder().decode(CanvasSnapshot.self, from: data))
+        waitUntil("the branch reopens") { restored.panels.values.contains { $0.title == "Alpha" } }
+        XCTAssertEqual(restored.layout, .treeDown)
+        let restoredRoot = try XCTUnwrap(restored.tree.roots.first)
+        XCTAssertEqual(restored.rootColors[restoredRoot], color)
+        XCTAssertEqual(restored.panels[restoredRoot]?.selectedItems.map(\.name), ["Alpha"])
+    }
+
+    func testRestoringAnEmptySnapshotClearsTheCanvas() throws {
+        _ = try XCTUnwrap(openRootAndWait())
+        controller.restore(CanvasSnapshot())
+        XCTAssertTrue(controller.panels.isEmpty)
+        XCTAssertTrue(controller.tree.roots.isEmpty)
+    }
 }

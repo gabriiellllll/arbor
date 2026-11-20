@@ -37,6 +37,12 @@ final class CanvasViewController: NSViewController {
     /// Set while mirroring a selection to the compared panel, so it is not mirrored back.
     var isMirroringSelection = false
     let animator = FrameAnimator()
+    /// Restoring a workspace: folder names to select in each folder once it loads (which
+    /// reopens its branches), and saved panel frames, by folder path.
+    var pendingSelections: [String: [String]] = [:]
+    var pendingFrames: [String: CGRect] = [:]
+    /// "Add to Favorites" was chosen in a panel.
+    var onAddFavorites: (([URL]) -> Void)?
 
     var activePanel: PanelID? {
         didSet {
@@ -124,8 +130,11 @@ final class CanvasViewController: NSViewController {
         return id
     }
 
-    private func addPanel(_ id: PanelID, url: URL, frame: CGRect) {
+    private func addPanel(_ id: PanelID, url: URL, frame proposed: CGRect) {
+        let frame = pendingFrames.removeValue(forKey: url.path) ?? proposed
+        tree.setFrame(frame, for: id)
         let panel = FolderPanelController(url: url, frame: frame)
+        panel.onAddFavorites = { [weak self] urls in self?.onAddFavorites?(urls) }
         panel.tint = color(of: id)
         panel.onSelectionChange = { [weak self] items in self?.selectionChanged(in: id, to: items) }
         panel.onRowsMoved = { [weak self] in self?.updateBranches() }
@@ -156,6 +165,11 @@ final class CanvasViewController: NSViewController {
 
     private func selectionChanged(in id: PanelID, to items: [FolderItem]) {
         guard let parent = panels[id] else { return }
+        if let names = pendingSelections.removeValue(forKey: parent.url.path), !parent.items.isEmpty {
+            // Restoring: selecting the saved folders reopens their branches.
+            parent.select(names: Set(names))
+            return
+        }
         var folders = items.filter(\.isFolder)
         if isCompared(id) {
             // ponytail: compared folders are followed one path at a time; trees would need a compare-tree layout.
