@@ -74,31 +74,39 @@ public struct IndexScanner: Sendable {
             if control.isCancelled {
                 throw CancellationError()
             }
-            try store.writer.write { db in
-                for _ in 0 ..< Self.foldersPerTransaction {
-                    guard let next = pending.popLast() else { return }
-                    guard let all = try? DirectoryReader.entries(at: URL(fileURLWithPath: next.path)) else {
-                        unreadable.append(next.path)
-                        continue
-                    }
-                    // Excluded items are left out entirely (an excluded folder has no known size).
-                    let entries = exclusions.isEmpty ? all : all.filter {
-                        !exclusions.contains((next.path as NSString).appendingPathComponent($0.name))
-                    }
+            // Read a batch of folders without holding the database, so scans of other volumes
+            // can write meanwhile; then write the batch in one transaction.
+            var batch: [(folder: Folder, entries: [DirectoryEntry])] = []
+            while batch.count < Self.foldersPerTransaction, let next = pending.popLast() {
+                guard let all = try? DirectoryReader.entries(at: URL(fileURLWithPath: next.path)) else {
+                    unreadable.append(next.path)
+                    continue
+                }
+                // Excluded items are left out entirely (an excluded folder has no known size).
+                let entries = exclusions.isEmpty ? all : all.filter {
+                    !exclusions.contains((next.path as NSString).appendingPathComponent($0.name))
+                }
+                batch.append((next, entries))
+            }
+            let found = try store.writer.write { db in
+                var folders: [Folder] = []
+                for (parent, entries) in batch {
                     let ids = try IndexStore.insert(
                         entries,
-                        parent: next.id,
+                        parent: parent.id,
                         rootID: root.id,
-                        depth: next.depth + 1,
+                        depth: parent.depth + 1,
                         db
                     )
-                    count += entries.count
                     for (entry, id) in zip(entries, ids) where entry.kind == .directory && !entry.isMountPoint {
-                        let path = (next.path as NSString).appendingPathComponent(entry.name)
-                        pending.append(Folder(id: id, path: path, depth: next.depth + 1))
+                        let path = (parent.path as NSString).appendingPathComponent(entry.name)
+                        folders.append(Folder(id: id, path: path, depth: parent.depth + 1))
                     }
                 }
+                return folders
             }
+            pending += found
+            count += batch.reduce(0) { $0 + $1.entries.count }
             progress(count)
         }
         return ScanSummary(items: count, unreadable: unreadable)
