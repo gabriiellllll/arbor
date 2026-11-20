@@ -116,4 +116,26 @@ final class CanvasUITests: XCTestCase {
         XCTAssertTrue(bothSides, "Inner opens on both sides")
         attachScreenshot("compare")
     }
+
+    @MainActor
+    func testEachWorkspaceKeepsItsCanvas() {
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 10))
+        app.typeKey("n", modifierFlags: [.command, .control])
+        let sidebar = app.outlines["sidebar"]
+        XCTAssertTrue(sidebar.staticTexts["Workspace 2"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.groups["panel.Root"].exists, "a new workspace starts empty")
+
+        sidebar.staticTexts["My Workspace"].click()
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 5), "the first workspace gets its canvas back")
+        attachScreenshot("workspaces")
+    }
+
+    @MainActor
+    func testFavoriteOpensFromTheSidebar() {
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 10))
+        app.typeKey("n", modifierFlags: [.command, .control])
+        XCTAssertFalse(app.groups["panel.Root"].waitForExistence(timeout: 2))
+        app.outlines["sidebar"].staticTexts["Root"].click()
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 5))
+    }
 }
