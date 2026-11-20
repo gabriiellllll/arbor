@@ -1,0 +1,91 @@
+@testable import IndexKit
+import XCTest
+
+/// The coordinator on a real folder, an on-disk index and real FSEvents.
+final class IndexCoordinatorTests: XCTestCase {
+    private var temp: TemporaryDirectory!
+    private var databaseURL: URL!
+
+    override func setUpWithError() throws {
+        temp = try TemporaryDirectory()
+        try temp.file("data/a.txt", size: 10)
+        databaseURL = FileManager.default.temporaryDirectory.appendingPathComponent("index-\(UUID().uuidString).sqlite")
+    }
+
+    override func tearDown() {
+        temp.remove()
+        for suffix in ["", "-wal", "-shm"] {
+            try? FileManager.default.removeItem(atPath: databaseURL.path + suffix)
+        }
+    }
+
+    private var dataPath: String {
+        temp.url.appendingPathComponent("data").path
+    }
+
+    private static func total(_ store: IndexStore, _ path: String) -> Int64? {
+        (try? store.itemID(forPath: path)).flatMap { (try? store.item($0))?.totalSize }
+    }
+
+    /// Starts a coordinator and waits until `condition` holds after a change notification.
+    private func run(_ store: IndexStore, until condition: @escaping @Sendable () -> Bool) -> IndexCoordinator {
+        let done = expectation(description: "condition met")
+        done.assertForOverFulfill = false
+        let coordinator = IndexCoordinator(store: store)
+        coordinator.onChange = { _ in
+            if condition() {
+                done.fulfill()
+            }
+        }
+        coordinator.start()
+        wait(for: [done], timeout: 15)
+        return coordinator
+    }
+
+    func testFirstStartScansThenFollowsChanges() throws {
+        let store = try IndexStore.open(at: databaseURL)
+        let path = dataPath
+        _ = try store.addRoot(path: temp.url.path, exclusions: [])
+        let coordinator = run(store) { Self.total(store, path) == 10 }
+        XCTAssertNotNil(try store.roots().first?.scannedAt)
+
+        let followed = expectation(description: "live change indexed")
+        followed.assertForOverFulfill = false
+        coordinator.onChange = { _ in
+            if Self.total(store, path) == 15 {
+                followed.fulfill()
+            }
+        }
+        try temp.file("data/b.txt", size: 5)
+        wait(for: [followed], timeout: 15)
+        coordinator.stop()
+    }
+
+    func testRelaunchCatchesUpWithChangesMadeWhileClosed() throws {
+        let path = dataPath
+        do {
+            let store = try IndexStore.open(at: databaseURL)
+            _ = try store.addRoot(path: temp.url.path, exclusions: [])
+            run(store) { Self.total(store, path) == 10 }.stop()
+        }
+
+        // "App closed": change the disk.
+        try temp.file("data/while-closed.txt", size: 90)
+
+        let reopened = try IndexStore.open(at: databaseURL)
+        let scannedAt = try XCTUnwrap(reopened.roots().first?.scannedAt)
+        let relaunched = run(reopened) { Self.total(reopened, path) == 100 }
+        XCTAssertEqual(try reopened.roots().first?.scannedAt, scannedAt, "caught up without a full rescan")
+        relaunched.stop()
+    }
+
+    func testANewRootOrAnotherEventHistoryNeedsAScan() throws {
+        let store = try IndexStore.inMemory()
+        let root = try store.addRoot(path: temp.url.path, exclusions: [])
+        XCTAssertTrue(IndexCoordinator.needsScan(root))
+        try store.markScanned(root.id, eventID: 1, volumeUUID: FolderWatcher.volumeUUID(for: temp.url.path))
+        XCTAssertFalse(try IndexCoordinator.needsScan(XCTUnwrap(store.roots().first)))
+        try store.markScanned(root.id, eventID: 1, volumeUUID: "another history")
+        XCTAssertTrue(try IndexCoordinator.needsScan(XCTUnwrap(store.roots().first)))
+    }
+}
