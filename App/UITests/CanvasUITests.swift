@@ -194,4 +194,15 @@ final class CanvasUITests: XCTestCase {
         )
         attachScreenshot("moved by drag")
     }
+
+    @MainActor
+    func testFolderSizesComeFromTheIndex() {
+        XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
+        let alphaSize = ByteCountFormatter.string(fromByteCount: 2000, countStyle: .file)
+        XCTAssertTrue(
+            app.tables["list.Root"].staticTexts[alphaSize].waitForExistence(timeout: 20),
+            "Alpha's size appears once the index is ready"
+        )
+        attachScreenshot("indexed sizes")
+    }
 }
