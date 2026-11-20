@@ -39,12 +39,15 @@ extension FolderPanelController: NSTextFieldDelegate {
         onItem && items.indices.contains(row) && items[row].isFolder ? items[row].url : url
     }
 
-    /// Nothing to do if every item already is in `destination`, or is `destination`.
+    /// Refused when an item is the destination or contains it (it can't go into itself), and
+    /// when every item already is in the destination.
     func isUsefulDrop(_ urls: [URL], into destination: URL) -> Bool {
         let target = destination.standardizedFileURL.path
-        return urls.contains {
-            $0.standardizedFileURL.path != target && $0.deletingLastPathComponent().standardizedFileURL.path != target
+        let paths = urls.map(\.standardizedFileURL.path)
+        if paths.contains(where: { target == $0 || target.hasPrefix($0 + "/") }) {
+            return false
         }
+        return urls.contains { $0.deletingLastPathComponent().standardizedFileURL.path != target }
     }
 
     func tableView(
