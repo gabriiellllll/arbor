@@ -57,6 +57,7 @@ jobs:
           xcodebuild -project Arbor.xcodeproj -scheme Arbor \
             -destination 'platform=macOS' \
             -resultBundlePath TestResults.xcresult \
+            -collect-test-diagnostics never \
             build test
       - name: Upload test results
         if: always()
