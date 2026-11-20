@@ -6,6 +6,8 @@ public final class IndexCoordinator: @unchecked Sendable {
     public enum Status: Equatable, Sendable {
         case idle
         case scanning(path: String, items: Int)
+        /// A background pass reading Finder tags after a scan.
+        case readingTags(path: String)
     }
 
     /// Folders whose contents or sizes changed in the index.
@@ -114,6 +116,9 @@ public final class IndexCoordinator: @unchecked Sendable {
             self?.onStatus?(.scanning(path: path, items: count))
         }
         try store.markScanned(root.id, eventID: eventID, volumeUUID: FolderWatcher.volumeUUID(for: path))
+        onChange?([path])
+        onStatus?(.readingTags(path: path))
+        try IndexScanner(store: store).readTags(root, control: control)
         onStatus?(.idle)
         onChange?([path])
     }
