@@ -88,3 +88,16 @@ final class IndexService {
         (try? store.childSizes(ofFolder: path)) ?? [:]
     }
 }
+
+extension IndexService {
+    /// Runs `query` off the main thread.
+    func search(_ query: SearchQuery) async -> [SearchResult] {
+        let store = store
+        return await Task.detached(priority: .userInitiated) { (try? store.search(query)) ?? [] }.value
+    }
+
+    /// Finder tags in the index, most used first.
+    func tagNames() -> [String] {
+        ((try? store.tagCounts()) ?? []).map(\.name)
+    }
+}

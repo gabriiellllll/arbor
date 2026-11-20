@@ -11,11 +11,15 @@ enum FileIcons {
         if item.entry.kind == .directory, !item.isFolder {
             return NSWorkspace.shared.icon(forFile: item.url.path)
         }
-        let key = item.isFolder ? "/folder" : (item.name as NSString).pathExtension.lowercased()
+        return icon(name: item.name, isFolder: item.isFolder)
+    }
+
+    static func icon(name: String, isFolder: Bool) -> NSImage {
+        let key = isFolder ? "/folder" : (name as NSString).pathExtension.lowercased()
         if let icon = cache[key] {
             return icon
         }
-        let type: UTType = item.isFolder ? .folder : (UTType(filenameExtension: key) ?? .data)
+        let type: UTType = isFolder ? .folder : (UTType(filenameExtension: key) ?? .data)
         let icon = NSWorkspace.shared.icon(for: type)
         cache[key] = icon
         return icon
