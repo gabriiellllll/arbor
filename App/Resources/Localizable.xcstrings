@@ -54,6 +54,9 @@
         }
       }
     },
+    "%lld results" : {
+
+    },
     "About Arbor" : {
       "comment" : "App menu item"
     },
@@ -66,6 +69,9 @@
     "Add to Favorites" : {
 
     },
+    "All Volumes" : {
+
+    },
     "An item named “%@” already exists in “%@”." : {
       "localizations" : {
         "en" : {
@@ -75,6 +81,18 @@
           }
         }
       }
+    },
+    "Any Date" : {
+
+    },
+    "Any Kind" : {
+
+    },
+    "Any Size" : {
+
+    },
+    "Any Tag" : {
+
     },
     "Apply to All" : {
 
@@ -89,6 +107,12 @@
 
     },
     "Arbor reads folders and sizes across your disks. Without Full Disk Access, macOS hides some locations and Arbor works in a limited mode." : {
+
+    },
+    "Archives" : {
+
+    },
+    "Audio" : {
 
     },
     "Back" : {
@@ -116,6 +140,9 @@
       "comment" : "Window menu item"
     },
     "Close Panel" : {
+
+    },
+    "Code" : {
 
     },
     "Color" : {
@@ -171,6 +198,9 @@
     "Delete the workspace “%@”?" : {
 
     },
+    "Documents" : {
+
+    },
     "Done" : {
 
     },
@@ -193,6 +223,18 @@
 
     },
     "File Operations" : {
+
+    },
+    "Files" : {
+
+    },
+    "Find…" : {
+
+    },
+    "Folder" : {
+
+    },
+    "Folders" : {
 
     },
     "Forward" : {
@@ -223,6 +265,9 @@
       "comment" : "App menu item"
     },
     "Icons" : {
+
+    },
+    "Images" : {
 
     },
     "Index up to date" : {
@@ -344,6 +389,21 @@
     "Orange" : {
 
     },
+    "Over %@" : {
+
+    },
+    "Past Day" : {
+
+    },
+    "Past Month" : {
+
+    },
+    "Past Week" : {
+
+    },
+    "Past Year" : {
+
+    },
     "Paste" : {
 
     },
@@ -366,6 +426,9 @@
       "comment" : "App menu item"
     },
     "Quit and reopen Arbor." : {
+
+    },
+    "Reading Finder tags in “%@”" : {
 
     },
     "Rebuild" : {
@@ -415,6 +478,15 @@
         }
       }
     },
+    "Search" : {
+
+    },
+    "Search the Index" : {
+
+    },
+    "Search: %@" : {
+
+    },
     "Select All" : {
 
     },
@@ -433,6 +505,9 @@
     "Show Size Bars" : {
 
     },
+    "Show in Canvas" : {
+
+    },
     "Size" : {
 
     },
@@ -446,6 +521,9 @@
 
     },
     "Stopped" : {
+
+    },
+    "Tag: %@" : {
 
     },
     "Tags" : {
@@ -479,6 +557,9 @@
 
     },
     "Undoing" : {
+
+    },
+    "Video" : {
 
     },
     "View" : {

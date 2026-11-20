@@ -79,6 +79,12 @@ extension MainMenu {
             action: #selector(NSText.selectAll(_:)),
             keyEquivalent: "a"
         )
+        menu.addItem(.separator())
+        menu.addItem(
+            withTitle: String(localized: "Find…"),
+            action: #selector(MainWindowController.focusSearch(_:)),
+            keyEquivalent: "f"
+        )
         return menu
     }
 

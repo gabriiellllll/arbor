@@ -17,6 +17,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
     let operationsPopover = NSPopover()
     let zoomLabel = NSTextField(labelWithString: "100 %")
     let handButton = NSButton()
+    weak var searchItem: NSSearchToolbarItem?
 
     private let onboarding = AccessOnboarding(defaults: .standard)
     private var onboardingSheet: NSViewController?
@@ -55,6 +56,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         setUpFileOperations(in: window)
         if let index {
             canvas.sizeLookup = { [weak index] path in index?.sizes(ofFolder: path) ?? [:] }
+            canvas.index = index
             index.onChange = { [weak self] _ in
                 self?.canvas.indexChanged()
                 self?.refreshSettings()
