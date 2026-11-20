@@ -1,0 +1,42 @@
+import Foundation
+
+/// A mounted volume, as shown in the sidebar.
+public struct Volume: Equatable, Sendable {
+    public let url: URL
+    public let name: String
+    public let isRoot: Bool
+    public let isRemovable: Bool
+    public let isInternal: Bool
+}
+
+/// Volumes currently mounted and visible to the user (hidden system volumes skipped).
+public enum MountedVolumes {
+    public static func current() -> [Volume] {
+        let keys: [URLResourceKey] = [
+            .volumeNameKey, .volumeIsRootFileSystemKey, .volumeIsRemovableKey, .volumeIsInternalKey,
+        ]
+        let urls = FileManager.default.mountedVolumeURLs(
+            includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]
+        ) ?? []
+        return ordered(urls.compactMap { url in
+            guard let values = try? url.resourceValues(forKeys: Set(keys)) else { return nil }
+            return Volume(
+                url: url,
+                name: values.volumeName ?? url.lastPathComponent,
+                isRoot: values.volumeIsRootFileSystem ?? false,
+                isRemovable: values.volumeIsRemovable ?? false,
+                isInternal: values.volumeIsInternal ?? false
+            )
+        })
+    }
+
+    /// The startup volume first, then by name.
+    static func ordered(_ volumes: [Volume]) -> [Volume] {
+        volumes.sorted { lhs, rhs in
+            if lhs.isRoot != rhs.isRoot {
+                return lhs.isRoot
+            }
+            return lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
+        }
+    }
+}
