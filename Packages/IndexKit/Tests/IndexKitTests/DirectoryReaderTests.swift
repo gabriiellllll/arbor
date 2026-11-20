@@ -83,6 +83,14 @@ final class DirectoryReaderTests: XCTestCase {
         XCTAssertEqual(try DirectoryReader.entries(at: temp.url).count, 3000)
     }
 
+    func testMountPointsAreFlagged() throws {
+        let rootEntries = try DirectoryReader.entries(at: URL(fileURLWithPath: "/"))
+        XCTAssertTrue(try entry("dev", in: rootEntries).isMountPoint, "devfs is mounted on /dev")
+        XCTAssertFalse(try entry("Users", in: rootEntries).isMountPoint)
+        try temp.directory("plain")
+        XCTAssertFalse(try entry("plain", in: DirectoryReader.entries(at: temp.url)).isMountPoint)
+    }
+
     func testMissingDirectoryThrows() {
         XCTAssertThrowsError(try DirectoryReader.entries(at: temp.url.appendingPathComponent("nope"))) { error in
             XCTAssertEqual((error as? POSIXError)?.code, .ENOENT)

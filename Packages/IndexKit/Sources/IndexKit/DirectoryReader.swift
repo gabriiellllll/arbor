@@ -17,7 +17,7 @@ public enum DirectoryReader {
             ATTR_CMN_RETURNED_ATTRS, ATTR_CMN_NAME, ATTR_CMN_ERROR, ATTR_CMN_OBJTYPE, ATTR_CMN_CRTIME,
             ATTR_CMN_MODTIME, ATTR_CMN_FLAGS, ATTR_CMN_FILEID
         )
-        request.dirattr = group(ATTR_DIR_ENTRYCOUNT)
+        request.dirattr = group(ATTR_DIR_ENTRYCOUNT, ATTR_DIR_MOUNTSTATUS)
         request.fileattr = group(ATTR_FILE_TOTALSIZE, ATTR_FILE_ALLOCSIZE)
 
         let buffer = UnsafeMutableRawPointer.allocate(byteCount: bufferSize, alignment: 8)
@@ -62,6 +62,7 @@ public enum DirectoryReader {
         let fileID = cursor.read(UInt64.self)
         let hasDirAttrs = returned.dirattr & group(ATTR_DIR_ENTRYCOUNT) != 0
         let entryCount = hasDirAttrs ? cursor.read(UInt32.self) : 0
+        let mountStatus = hasDirAttrs ? cursor.read(UInt32.self) : 0
         let hasFileAttrs = returned.fileattr & group(ATTR_FILE_TOTALSIZE) != 0
         let totalSize = hasFileAttrs ? cursor.read(Int64.self) : 0
         let allocSize = hasFileAttrs ? cursor.read(Int64.self) : 0
@@ -81,7 +82,8 @@ public enum DirectoryReader {
             created: created,
             modified: modified,
             fileID: fileID,
-            isHidden: name.hasPrefix(".") || flags & UInt32(UF_HIDDEN) != 0
+            isHidden: name.hasPrefix(".") || flags & UInt32(UF_HIDDEN) != 0,
+            isMountPoint: mountStatus & UInt32(DIR_MNTSTATUS_MNTPOINT) != 0
         )
     }
 
