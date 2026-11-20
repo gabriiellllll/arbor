@@ -12,6 +12,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
     private let split: MainSplitViewController
     let operations: FileOperationsController
     let index: IndexService?
+    private var settings: SettingsWindowController?
     let operationsButton = NSButton()
     let operationsPopover = NSPopover()
     let zoomLabel = NSTextField(labelWithString: "100 %")
@@ -54,7 +55,11 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         setUpFileOperations(in: window)
         if let index {
             canvas.sizeLookup = { [weak index] path in index?.sizes(ofFolder: path) ?? [:] }
-            index.onChange = { [weak self] _ in self?.canvas.indexChanged() }
+            index.onChange = { [weak self] _ in
+                self?.canvas.indexChanged()
+                self?.refreshSettings()
+            }
+            index.onStatus = { [weak self] _ in self?.refreshSettings() }
             index.start()
         }
     }
@@ -161,6 +166,21 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         canvas.goForward()
     }
 
+    @objc func showSettings(_: Any?) {
+        guard let index else { return }
+        let controller = settings ?? SettingsWindowController(index: index)
+        settings = controller
+        controller.model.refresh()
+        controller.showWindow(nil)
+        controller.window?.center()
+    }
+
+    private func refreshSettings() {
+        if let settings, settings.isVisible {
+            settings.model.refresh()
+        }
+    }
+
     @objc func toggleSizeBars(_: Any?) {
         canvas.showsSizeBars.toggle()
     }
@@ -175,6 +195,8 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
             item.state = CanvasLayout.allCases.firstIndex(of: canvas.layout) == item.tag ? .on : .off
         case #selector(compareSideBySide(_:)):
             return canvas.canCompareSelection
+        case #selector(showSettings(_:)):
+            return index != nil
         case #selector(toggleSizeBars(_:)):
             item.state = canvas.showsSizeBars ? .on : .off
         case #selector(goBack(_:)):

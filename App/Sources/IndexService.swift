@@ -59,6 +59,30 @@ final class IndexService {
         coordinator.stop()
     }
 
+    func roots() -> [IndexRoot] {
+        (try? store.roots()) ?? []
+    }
+
+    func summary(of root: IndexRoot) -> (items: Int64, totalSize: Int64) {
+        (try? store.summary(of: root)) ?? (0, 0)
+    }
+
+    func addRoot(path: String, exclusions: [String]) {
+        coordinator.addRoot(path: path, exclusions: exclusions)
+    }
+
+    func removeRoot(_ id: Int64) {
+        coordinator.removeRoot(id)
+    }
+
+    func setExclusions(_ id: Int64, _ exclusions: [String]) {
+        coordinator.setExclusions(id, exclusions)
+    }
+
+    func rebuild(_ id: Int64) {
+        coordinator.rebuild(id)
+    }
+
     /// Total sizes of the items in the folder at `path` (canonical), by name.
     func sizes(ofFolder path: String) -> [String: Int64] {
         (try? store.childSizes(ofFolder: path)) ?? [:]

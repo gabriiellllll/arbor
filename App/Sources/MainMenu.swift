@@ -14,6 +14,12 @@ enum MainMenu {
         )
         appMenu.addItem(.separator())
         appMenu.addItem(
+            withTitle: String(localized: "Settings…"),
+            action: #selector(MainWindowController.showSettings(_:)),
+            keyEquivalent: ","
+        )
+        appMenu.addItem(.separator())
+        appMenu.addItem(
             withTitle: String(localized: "Hide Arbor"),
             action: #selector(NSApplication.hide(_:)),
             keyEquivalent: "h"
