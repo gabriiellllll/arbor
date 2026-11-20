@@ -11,6 +11,7 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
 
     private let split: MainSplitViewController
     let operations: FileOperationsController
+    let index: IndexService?
     let operationsButton = NSButton()
     let operationsPopover = NSPopover()
     let zoomLabel = NSTextField(labelWithString: "100 %")
@@ -23,9 +24,10 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         split.canvas
     }
 
-    init(database: AppDatabase, runner: FileOperationRunner) {
+    init(database: AppDatabase, runner: FileOperationRunner, index: IndexService?) {
         split = MainSplitViewController(database: database)
         operations = FileOperationsController(runner: runner)
+        self.index = index
         let window = MainWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1400, height: 860),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -50,6 +52,11 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         canvas.onViewportChange = { [weak self] in self?.updateZoomLabel() }
         updateZoomLabel()
         setUpFileOperations(in: window)
+        if let index {
+            canvas.sizeLookup = { [weak index] path in index?.sizes(ofFolder: path) ?? [:] }
+            index.onChange = { [weak self] _ in self?.canvas.indexChanged() }
+            index.start()
+        }
     }
 
     @available(*, unavailable)

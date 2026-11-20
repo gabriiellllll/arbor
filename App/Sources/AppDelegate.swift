@@ -30,7 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let controller = MainWindowController(
             database: openDatabase(favorites: fixture.map { [$0] }),
-            runner: FileOperationRunner(trash: fixture.map(UITestFixture.trash(in:)) ?? FileOperationRunner.systemTrash)
+            runner: FileOperationRunner(trash: fixture.map(UITestFixture.trash(in:)) ?? FileOperationRunner
+                .systemTrash),
+            index: openIndex(fixture: fixture)
         )
         controller.showWindow(nil)
         windowController = controller
@@ -65,6 +67,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.presentError(error)
             // ponytail: falls back to a session-only database; data is lost on quit in that case.
             return (try? AppDatabase.inMemory()) ?? { fatalError("SQLite unavailable: \(error)") }()
+        }
+    }
+
+    /// The file index (UI tests index only their fixture). The app works without it.
+    private func openIndex(fixture: URL?) -> IndexService? {
+        do {
+            return try fixture.map(IndexService.openForUITests(fixture:)) ?? IndexService.openDefault()
+        } catch {
+            NSApp.presentError(error)
+            return nil
         }
     }
 
