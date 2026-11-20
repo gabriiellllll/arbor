@@ -93,6 +93,14 @@ final class PanelDropTests: XCTestCase {
             []
         )
     }
+
+    func testAFolderCannotBeDroppedIntoItselfOrItsChildren() {
+        let sub = folder.appendingPathComponent("Sub")
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("other.txt")
+        XCTAssertFalse(panel.isUsefulDrop([file, sub], into: sub), "the whole drop is refused, like Finder")
+        XCTAssertFalse(panel.isUsefulDrop([folder], into: sub))
+        XCTAssertTrue(panel.isUsefulDrop([file], into: sub))
+    }
 }
 
 /// The parts of a drag session the drop callbacks read.
