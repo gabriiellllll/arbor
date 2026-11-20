@@ -73,7 +73,7 @@ final class IndexSettingsModel {
     }
 }
 
-/// Settings › Index.
+/// Settings › Index. What is indexed comes first; every mounted volume is listed after.
 struct IndexSettingsView: View {
     let model: IndexSettingsModel
 
@@ -81,16 +81,6 @@ struct IndexSettingsView: View {
         Form {
             Section {
                 statusLine
-            }
-            Section("Indexed Volumes") {
-                ForEach(model.volumes) { volume in
-                    Toggle(isOn: Binding(
-                        get: { volume.rootID != nil },
-                        set: { model.setIndexed(volume, $0) }
-                    )) {
-                        Text(volume.name)
-                    }
-                }
             }
             ForEach(model.roots) { row in
                 Section(row.root.path) {
@@ -110,6 +100,16 @@ struct IndexSettingsView: View {
                         Button("Add Exclusion…") { chooseExclusion(for: row) }
                         Spacer()
                         Button("Rebuild") { model.rebuild(row) }
+                    }
+                }
+            }
+            Section("Indexed Volumes") {
+                ForEach(model.volumes) { volume in
+                    Toggle(isOn: Binding(
+                        get: { volume.rootID != nil },
+                        set: { model.setIndexed(volume, $0) }
+                    )) {
+                        Text(volume.name)
                     }
                 }
             }
