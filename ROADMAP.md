@@ -36,16 +36,18 @@ when merged-ready: implemented, tested, documented.
 - [x] Side-by-side comparison of sibling folders: homologous folders on the same row, mirrored navigation, one-sided items marked
 
 ## Phase 3 — Sidebar, workspaces, basic operations
-- [ ] Workspaces: create, rename, delete, each remembers its canvas
-- [ ] Shared section (scope to confirm)
-- [ ] Favorites: drag and drop, color, remove
-- [ ] Locations: volumes, iCloud Drive, OneDrive if present, Computer
-- [ ] Finder tags: read and write
+Delivered in two pull requests: 3a (sidebar, workspaces, tags, history) and 3b (file operations).
+
+- [x] Workspaces: create, rename, delete, each remembers its canvas (saved on switch and on quit)
+- [x] Favorites: drag and drop (from panels or Finder, reorder), color, remove
+- [x] Locations: volumes, iCloud Drive, OneDrive if present, Computer
+- [x] Finder tags: read and write (row dots, context menu, inspector)
+- [x] Canvas navigation history (Back ⌘[, Forward ⌘])
 - [ ] File operation queue: progress, pause, cancel, conflicts (replace, keep both, skip, apply to all) (tested)
 - [ ] Drag and drop between panels and with Finder (move, ⌥ copy)
 - [ ] Multi-selection across panels: copy, move, rename, trash
 - [ ] Undo / redo of file operations (tested)
-- [ ] Canvas navigation history
+- Moved: the Shared section comes with network shares (phase 6); the clickable Tags section comes with search panels (phase 5)
 
 ## Phase 4 — Internal index
 - [ ] Parallel per-volume scan with `getattrlistbulk` into SQLite (tested)
@@ -59,6 +61,7 @@ when merged-ready: implemented, tested, documented.
 - [ ] Full-text extraction: PDF, .docx / .xlsx / .pptx, plain text / Markdown / code (background, low priority)
 - [ ] Search results as a canvas panel, each result can open its parent chain
 - [ ] Filters: type, size, date, tag, volume
+- [ ] Sidebar Tags section: clicking a tag opens a panel of the items carrying it
 
 ## Phase 6 — External disks and shares
 - [ ] Stable volume identity (volume UUID, DiskArbitration)
@@ -66,6 +69,7 @@ when merged-ready: implemented, tested, documented.
 - [ ] Disk details: vendor, model, serial, connection type, capacity, file system (IOKit)
 - [ ] User chooses which disks join the catalog
 - [ ] Network shares (SMB / AFP / NFS): remembered, one-click reconnect (NetFS), Keychain credentials
+- [ ] Sidebar Shared section: mounted network shares and servers seen on the network
 
 ## Phase 7 — Batch rename and merge
 - [ ] Rename engine: find/replace (regex, case), prefix/suffix, numbering, dates (created, modified, EXIF), case change (tested)
