@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ items, %@, scanned %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ items, %2$@, scanned %3$@"
+          }
+        }
+      }
+    },
     "%@ of %@" : {
       "localizations" : {
         "en" : {
@@ -48,6 +58,9 @@
       "comment" : "App menu item"
     },
     "Actual Size" : {
+
+    },
+    "Add Exclusion…" : {
 
     },
     "Add to Favorites" : {
@@ -167,6 +180,9 @@
     "Edit" : {
 
     },
+    "Exclude" : {
+
+    },
     "Failed: %@" : {
 
     },
@@ -207,6 +223,15 @@
       "comment" : "App menu item"
     },
     "Icons" : {
+
+    },
+    "Index up to date" : {
+
+    },
+    "Indexed" : {
+
+    },
+    "Indexed Volumes" : {
 
     },
     "Indigo" : {
@@ -292,6 +317,9 @@
     "No operations" : {
 
     },
+    "Not scanned yet" : {
+
+    },
     "Only in %@" : {
 
     },
@@ -340,10 +368,16 @@
     "Quit and reopen Arbor." : {
 
     },
+    "Rebuild" : {
+
+    },
     "Redo" : {
 
     },
     "Redo %@" : {
+
+    },
+    "Remove Exclusion" : {
 
     },
     "Remove from Favorites" : {
@@ -371,7 +405,23 @@
     "Resume" : {
 
     },
+    "Scanning “%@”: %@ items" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scanning “%1$@”: %2$@ items"
+          }
+        }
+      }
+    },
     "Select All" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Settings…" : {
 
     },
     "Show Inspector" : {
