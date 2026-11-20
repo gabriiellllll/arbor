@@ -12,9 +12,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         app.run()
     }
 
+    /// Unit tests run inside the app: they build their own controllers and must not touch the
+    /// user's data, so the app then opens no window.
+    private static var isHostingUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.mainMenu = MainMenu.make()
-        let controller = MainWindowController()
+        guard !Self.isHostingUnitTests else { return }
+        let controller = MainWindowController(database: openDatabase())
         controller.showWindow(nil)
         windowController = controller
         NSApp.activate()
@@ -30,6 +37,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidBecomeActive(_: Notification) {
         // UI tests run on a fixture folder and must not be blocked by the onboarding sheet.
         windowController?.checkFullDiskAccess(showOnboarding: !UITestFixture.isActive)
+    }
+
+    func applicationWillTerminate(_: Notification) {
+        windowController?.saveWorkspace()
+    }
+
+    /// The app database, seeded on first launch. UI tests get a throwaway in-memory one.
+    private func openDatabase() -> AppDatabase {
+        do {
+            let database = UITestFixture.isActive ? try AppDatabase.inMemory() : try AppDatabase.openDefault()
+            let manager = FileManager.default
+            let places = [manager.homeDirectoryForCurrentUser]
+                + [.desktopDirectory, .documentDirectory, .downloadsDirectory]
+                .compactMap { manager.urls(for: $0, in: .userDomainMask).first }
+                + [URL(fileURLWithPath: "/Applications", isDirectory: true)]
+            try database.seedIfEmpty(defaultWorkspaceName: String(localized: "My Workspace"), favorites: places)
+            return database
+        } catch {
+            NSApp.presentError(error)
+            // ponytail: falls back to a session-only database; data is lost on quit in that case.
+            return (try? AppDatabase.inMemory()) ?? { fatalError("SQLite unavailable: \(error)") }()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {

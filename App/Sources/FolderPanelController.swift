@@ -251,6 +251,9 @@ final class FolderPanelController: NSObject {
         tableView.doubleAction = #selector(openSelectedFiles)
         tableView.setAccessibilityIdentifier("list.\(name)")
         tableView.menu = makeContextMenu()
+        // ponytail: dragging out copies only; moving files by drag comes with the file operations (phase 3b).
+        tableView.setDraggingSourceOperationMask(.copy, forLocal: true)
+        tableView.setDraggingSourceOperationMask(.copy, forLocal: false)
         embed(tableView, in: tableScroll)
     }
 
@@ -268,6 +271,8 @@ final class FolderPanelController: NSObject {
         collectionView.delegate = self
         collectionView.register(IconItem.self, forItemWithIdentifier: IconItem.identifier)
         collectionView.menu = makeContextMenu()
+        collectionView.setDraggingSourceOperationMask(.copy, forLocal: true)
+        collectionView.setDraggingSourceOperationMask(.copy, forLocal: false)
         embed(collectionView, in: collectionScroll)
     }
 
@@ -332,6 +337,11 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
         return cell
     }
 
+    /// Rows can be dragged out (to the sidebar favorites, or to Finder as a copy).
+    func tableView(_: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        items.indices.contains(row) ? items[row].url as NSURL : nil
+    }
+
     func tableView(_: NSTableView, rowViewForRow _: Int) -> NSTableRowView? {
         TintedRowView(tint: tint)
     }
@@ -370,6 +380,10 @@ extension FolderPanelController: NSCollectionViewDataSource, NSCollectionViewDel
             view.tint = tint
         }
         return view
+    }
+
+    func collectionView(_: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath) -> NSPasteboardWriting? {
+        items.indices.contains(indexPath.item) ? items[indexPath.item].url as NSURL : nil
     }
 
     func collectionView(_: NSCollectionView, didSelectItemsAt _: Set<IndexPath>) {
