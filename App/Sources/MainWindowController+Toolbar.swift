@@ -11,6 +11,7 @@ extension MainWindowController: NSToolbarDelegate {
         static let zoomReset = NSToolbarItem.Identifier("zoomReset")
         static let background = NSToolbarItem.Identifier("background")
         static let layout = NSToolbarItem.Identifier("layout")
+        static let operations = NSToolbarItem.Identifier("operations")
         static let back = NSToolbarItem.Identifier("back")
         static let forward = NSToolbarItem.Identifier("forward")
         static let openFolder = NSToolbarItem.Identifier("openFolder")
@@ -20,6 +21,7 @@ extension MainWindowController: NSToolbarDelegate {
         [
             .toggleSidebar, .sidebarTrackingSeparator, Item.back, Item.forward, Item.openFolder, .flexibleSpace,
             Item.hand, Item.zoomOut, Item.zoomLevel, Item.zoomIn, Item.zoomReset, Item.layout, Item.background,
+            Item.operations,
             .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector,
         ]
     }
@@ -39,6 +41,7 @@ extension MainWindowController: NSToolbarDelegate {
         case Item.zoomLevel: return zoomLevelItem()
         case Item.background: return backgroundItem()
         case Item.layout: return layoutItem()
+        case Item.operations: return operationsItem()
         default: return nil
         }
     }

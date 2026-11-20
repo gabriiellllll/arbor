@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ of %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@"
+          }
+        }
+      }
+    },
     "%lld items" : {
       "comment" : "Number of items in a folder panel title bar",
       "localizations" : {
@@ -24,6 +34,16 @@
         }
       }
     },
+    "%lld of %lld items" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld items"
+          }
+        }
+      }
+    },
     "About Arbor" : {
       "comment" : "App menu item"
     },
@@ -31,6 +51,19 @@
 
     },
     "Add to Favorites" : {
+
+    },
+    "An item named “%@” already exists in “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "An item named “%1$@” already exists in “%2$@”."
+          }
+        }
+      }
+    },
+    "Apply to All" : {
 
     },
     "Arbor" : {
@@ -60,6 +93,12 @@
     "Cancel" : {
 
     },
+    "Cancelled" : {
+
+    },
+    "Clear" : {
+
+    },
     "Close" : {
       "comment" : "Window menu item"
     },
@@ -78,10 +117,36 @@
     "Continue in Limited Mode" : {
 
     },
+    "Copy" : {
+
+    },
+    "Copying %lld items to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copying %1$lld items to “%2$@”"
+          }
+        }
+      }
+    },
+    "Copying “%@” to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copying “%1$@” to “%2$@”"
+          }
+        }
+      }
+    },
     "Created" : {
 
     },
     "Crosses" : {
+
+    },
+    "Cut" : {
 
     },
     "Delete" : {
@@ -93,13 +158,25 @@
     "Delete the workspace “%@”?" : {
 
     },
+    "Done" : {
+
+    },
     "Dots" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Failed: %@" : {
 
     },
     "Favorites" : {
 
     },
     "File" : {
+
+    },
+    "File Operations" : {
 
     },
     "Forward" : {
@@ -138,6 +215,9 @@
     "Its canvas will be lost. Your files are not affected." : {
 
     },
+    "Keep Both" : {
+
+    },
     "Kind" : {
 
     },
@@ -162,6 +242,41 @@
     "Modified" : {
 
     },
+    "Move" : {
+
+    },
+    "Move Item Here" : {
+
+    },
+    "Move to Trash" : {
+
+    },
+    "Moving %lld items to the Trash" : {
+
+    },
+    "Moving %lld items to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Moving %1$lld items to “%2$@”"
+          }
+        }
+      }
+    },
+    "Moving “%@” to the Trash" : {
+
+    },
+    "Moving “%@” to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Moving “%1$@” to “%2$@”"
+          }
+        }
+      }
+    },
     "My Workspace" : {
 
     },
@@ -172,6 +287,9 @@
 
     },
     "No Selection" : {
+
+    },
+    "No operations" : {
 
     },
     "Only in %@" : {
@@ -192,7 +310,19 @@
     "Open System Settings › Privacy & Security › Full Disk Access." : {
 
     },
+    "Operations" : {
+
+    },
     "Orange" : {
+
+    },
+    "Paste" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Paused" : {
 
     },
     "Pink" : {
@@ -210,10 +340,38 @@
     "Quit and reopen Arbor." : {
 
     },
+    "Redo" : {
+
+    },
+    "Redo %@" : {
+
+    },
     "Remove from Favorites" : {
 
     },
     "Rename" : {
+
+    },
+    "Renaming “%@” to “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Renaming “%1$@” to “%2$@”"
+          }
+        }
+      }
+    },
+    "Replace" : {
+
+    },
+    "Replacing moves the existing item to the Trash." : {
+
+    },
+    "Resume" : {
+
+    },
+    "Select All" : {
 
     },
     "Show Inspector" : {
@@ -225,13 +383,25 @@
     "Size" : {
 
     },
+    "Skip" : {
+
+    },
     "Star" : {
+
+    },
+    "Stop" : {
+
+    },
+    "Stopped" : {
 
     },
     "Tags" : {
 
     },
     "Teal" : {
+
+    },
+    "The operation couldn’t be completed." : {
 
     },
     "This folder can’t be read: %@" : {
@@ -249,7 +419,19 @@
     "Turn on Arbor (click + to add it if it is not listed)." : {
 
     },
+    "Undo" : {
+
+    },
+    "Undo %@" : {
+
+    },
+    "Undoing" : {
+
+    },
     "View" : {
+
+    },
+    "Waiting" : {
 
     },
     "Where" : {

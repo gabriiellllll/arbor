@@ -1,3 +1,4 @@
+import FileOpsKit
 import Foundation
 
 /// UI tests launch the app with `ARBOR_UI_TEST_FIXTURE=1`: the app then builds a small
@@ -20,5 +21,17 @@ enum UITestFixture {
         }
         try Data("notes".utf8).write(to: root.appendingPathComponent("notes.txt"))
         return root
+    }
+
+    /// UI tests trash into a folder next to the fixture, never the user's Trash.
+    static func trash(in fixture: URL) -> FileOperationRunner.Trash {
+        let folder = fixture.deletingLastPathComponent().appendingPathComponent("Trash", isDirectory: true)
+        return { url in
+            let slot = folder.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try FileManager.default.createDirectory(at: slot, withIntermediateDirectories: true)
+            let destination = slot.appendingPathComponent(url.lastPathComponent)
+            try FileManager.default.moveItem(at: url, to: destination)
+            return destination
+        }
     }
 }
