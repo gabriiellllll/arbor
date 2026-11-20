@@ -172,22 +172,27 @@ final class CanvasUITests: XCTestCase {
     }
 
     @MainActor
-    func testDraggingAFileOntoAFolderMovesIt() {
+    func testDraggingAFileToAnotherPanelMovesIt() {
         XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
-        row("notes.txt", in: "Root").click(forDuration: 0.6, thenDragTo: row("Beta", in: "Root"))
+        row("Beta", in: "Root").click()
+        let betaList = app.tables["list.Beta"]
+        XCTAssertTrue(betaList.waitForExistence(timeout: 5))
+        // ⌘ keeps Beta selected (its panel stays open) while picking up notes.txt.
+        XCUIElement.perform(withKeyModifiers: .command) {
+            row("notes.txt", in: "Root").click(forDuration: 0.6, thenDragTo: betaList)
+        }
+        XCTAssertTrue(row("notes.txt", in: "Beta").waitForExistence(timeout: 5), "moved into Beta")
         let gone = NSPredicate(format: "exists == false")
-        let moved = XCTWaiter.wait(
+        let left = XCTWaiter.wait(
             for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))],
             timeout: 5
         )
-        if moved != .completed {
+        if left != .completed {
             // Leaves evidence in the CI log and result bundle.
             attachScreenshot("drag not applied")
             print(app.windows["main"].debugDescription)
         }
-        XCTAssertEqual(moved, .completed)
-        row("Beta", in: "Root").click()
-        XCTAssertTrue(row("notes.txt", in: "Beta").waitForExistence(timeout: 5))
+        XCTAssertEqual(left, .completed)
         attachScreenshot("moved by drag")
     }
 }
