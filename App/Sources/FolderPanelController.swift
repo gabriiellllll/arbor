@@ -1,4 +1,5 @@
 import AppKit
+import FileOpsKit
 import IndexKit
 
 /// One folder panel: loads the folder, shows it as a sortable list or as icons, and reports
@@ -39,15 +40,17 @@ final class FolderPanelController: NSObject {
     /// Rows moved inside the panel (scroll, sort, reload, mode): branches must follow.
     var onRowsMoved: (() -> Void)?
     var onClose: (() -> Void)?
+    /// "Add to Favorites" was chosen for these folders.
+    var onAddFavorites: (([URL]) -> Void)?
 
-    private var mode: Mode = .list
+    private(set) var mode: Mode = .list
     private var sortKey: FolderSortKey = .name
     private var ascending = true
     private var loadGeneration = 0
 
-    private let tableView = NSTableView()
+    let tableView = NSTableView()
     private let tableScroll = NSScrollView()
-    private let collectionView = NSCollectionView()
+    let collectionView = NSCollectionView()
     private let collectionScroll = NSScrollView()
     private let messageLabel = NSTextField(wrappingLabelWithString: "")
 
@@ -78,7 +81,7 @@ final class FolderPanelController: NSObject {
         selectedIndexes.compactMap { items.indices.contains($0) ? items[$0] : nil }
     }
 
-    private var selectedIndexes: IndexSet {
+    var selectedIndexes: IndexSet {
         switch mode {
         case .list: tableView.selectedRowIndexes
         case .icons: IndexSet(collectionView.selectionIndexPaths.map(\.item))
@@ -247,6 +250,7 @@ final class FolderPanelController: NSObject {
         tableView.target = self
         tableView.doubleAction = #selector(openSelectedFiles)
         tableView.setAccessibilityIdentifier("list.\(name)")
+        tableView.menu = makeContextMenu()
         embed(tableView, in: tableScroll)
     }
 
@@ -263,6 +267,7 @@ final class FolderPanelController: NSObject {
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(IconItem.self, forItemWithIdentifier: IconItem.identifier)
+        collectionView.menu = makeContextMenu()
         embed(collectionView, in: collectionScroll)
     }
 
@@ -315,6 +320,9 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
             let onlyHere = counterpartNames.map { !$0.contains(item.name) } ?? false
             cell.textField?.textColor = onlyHere ? .systemOrange : .labelColor
             cell.toolTip = onlyHere ? String(localized: "Only in \(title)") : nil
+            (cell as? NameCell)?.tagsField.attributedStringValue = TagColors.dots(
+                for: (try? FinderTags.tags(of: item.url)) ?? []
+            )
         case .size:
             cell.textField?.stringValue = item.entry.kind == .directory
                 ? "--" : ByteCountFormatter.string(fromByteCount: item.entry.size, countStyle: .file)

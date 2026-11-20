@@ -4,21 +4,22 @@ import AppKit
 @MainActor
 enum FolderCells {
     static func makeListCell(identifier: NSUserInterfaceItemIdentifier, withIcon: Bool) -> NSTableCellView {
-        let cell = NSTableCellView()
+        let cell = withIcon ? NameCell() : NSTableCellView()
         cell.identifier = identifier
         let text = NSTextField(labelWithString: "")
         text.lineBreakMode = .byTruncatingMiddle
         text.translatesAutoresizingMaskIntoConstraints = false
+        text.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         cell.addSubview(text)
         cell.textField = text
-        var constraints = [
-            text.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-            text.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -2),
-        ]
-        if withIcon {
+        var constraints = [text.centerYAnchor.constraint(equalTo: cell.centerYAnchor)]
+        if let cell = cell as? NameCell {
             let image = NSImageView()
-            image.translatesAutoresizingMaskIntoConstraints = false
-            cell.addSubview(image)
+            let tags = cell.tagsField
+            for subview in [image, tags] as [NSView] {
+                subview.translatesAutoresizingMaskIntoConstraints = false
+                cell.addSubview(subview)
+            }
             cell.imageView = image
             constraints += [
                 image.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2),
@@ -26,12 +27,54 @@ enum FolderCells {
                 image.widthAnchor.constraint(equalToConstant: 16),
                 image.heightAnchor.constraint(equalToConstant: 16),
                 text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 6),
+                tags.leadingAnchor.constraint(equalTo: text.trailingAnchor, constant: 4),
+                tags.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor, constant: -2),
+                tags.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
             ]
         } else {
-            constraints.append(text.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2))
+            constraints += [
+                text.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2),
+                text.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -2),
+            ]
         }
         NSLayoutConstraint.activate(constraints)
         return cell
+    }
+}
+
+/// Name cell: icon, name, and a dot per Finder tag.
+@MainActor
+final class NameCell: NSTableCellView {
+    let tagsField = NSTextField(labelWithString: "")
+}
+
+/// Finder tag colors, from the system's label names and colors.
+@MainActor
+enum TagColors {
+    static func color(for tag: String) -> NSColor {
+        let workspace = NSWorkspace.shared
+        guard let index = workspace.fileLabels.firstIndex(of: tag), index < workspace.fileLabelColors.count else {
+            return .secondaryLabelColor
+        }
+        return workspace.fileLabelColors[index]
+    }
+
+    /// One colored dot per tag.
+    static func dots(for tags: [String]) -> NSAttributedString {
+        let dots = NSMutableAttributedString()
+        for tag in tags {
+            dots.append(NSAttributedString(string: "●", attributes: [.foregroundColor: color(for: tag)]))
+        }
+        return dots
+    }
+
+    /// A small dot image for menus.
+    static func dotImage(_ color: NSColor) -> NSImage {
+        NSImage(size: NSSize(width: 12, height: 12), flipped: false) { rect in
+            color.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
+            return true
+        }
     }
 }
 
