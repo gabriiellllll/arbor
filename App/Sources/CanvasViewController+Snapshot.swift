@@ -54,6 +54,7 @@ extension CanvasViewController {
         rootColors = [:]
         manualFrames = [:]
         activePanel = nil
+        history = NavigationHistory()
         pendingSelections = snapshot.selections
         pendingFrames = snapshot.frames
 

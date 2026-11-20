@@ -27,6 +27,7 @@ enum MainMenu {
         main.addItem(submenu: appMenu)
         main.addItem(submenu: fileMenu())
         main.addItem(submenu: viewMenu())
+        main.addItem(submenu: goMenu())
 
         let windowMenu = NSMenu(title: String(localized: "Window"))
         windowMenu.addItem(
@@ -105,6 +106,20 @@ extension MainMenu {
             keyEquivalent: "i"
         )
         inspector.keyEquivalentModifierMask = [.command, .option]
+        return menu
+    }
+
+    static func goMenu() -> NSMenu {
+        let menu = NSMenu(title: String(localized: "Go"))
+        menu.addItem(
+            withTitle: String(localized: "Back"),
+            action: #selector(MainWindowController.goBack(_:)),
+            keyEquivalent: "["
+        )
+        menu.addItem(
+            withTitle: String(localized: "Forward"), action: #selector(MainWindowController.goForward(_:)),
+            keyEquivalent: "]"
+        )
         return menu
     }
 

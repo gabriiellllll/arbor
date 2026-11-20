@@ -43,6 +43,10 @@ final class CanvasViewController: NSViewController {
     var pendingFrames: [String: CGRect] = [:]
     /// "Add to Favorites" was chosen in a panel.
     var onAddFavorites: (([URL]) -> Void)?
+    /// Folders opened, for Back and Forward.
+    var history = NavigationHistory<String>()
+    /// Set while Back or Forward reopens a folder, so it is not recorded again.
+    var isNavigatingHistory = false
 
     var activePanel: PanelID? {
         didSet {
@@ -109,9 +113,11 @@ final class CanvasViewController: NSViewController {
             .first(where: { tree[$0]?.content.standardizedFileURL == url.standardizedFileURL && !isCompared($0) })
         {
             activate(existing, reveal: true)
+            recordVisit(existing)
             return
         }
         let id = addRoot(url, colorIndex: colorIndex)
+        recordVisit(id)
         activate(id, reveal: layout == .manual)
         applyLayout(revealing: id)
     }
@@ -197,6 +203,9 @@ final class CanvasViewController: NSViewController {
         if isCompared(id) {
             mirrorSelection(from: id, names: Set(folders.map(\.name)))
             updateComparisonMarks()
+        }
+        if let last = result.added.last {
+            recordVisit(last)
         }
         if result.added.isEmpty, result.removed.isEmpty {
             updateBranches()

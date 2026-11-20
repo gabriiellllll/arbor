@@ -45,6 +45,9 @@
     "Arbor reads folders and sizes across your disks. Without Full Disk Access, macOS hides some locations and Arbor works in a limited mode." : {
 
     },
+    "Back" : {
+
+    },
     "Background" : {
 
     },
@@ -99,10 +102,16 @@
     "File" : {
 
     },
+    "Forward" : {
+
+    },
     "Full Disk Access Was Turned Off" : {
 
     },
     "Give Arbor Full Disk Access" : {
+
+    },
+    "Go" : {
 
     },
     "Grant Access…" : {
