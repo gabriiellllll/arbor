@@ -203,6 +203,25 @@ final class CanvasUITests: XCTestCase {
             app.tables["list.Root"].staticTexts[alphaSize].waitForExistence(timeout: 20),
             "Alpha's size appears once the index is ready"
         )
-        attachScreenshot("indexed sizes")
+        app.typeKey("b", modifierFlags: [.command, .option])
+        attachScreenshot("indexed sizes with size bars")
+    }
+
+    @MainActor
+    func testSettingsShowTheIndexedFolder() {
+        XCTAssertTrue(app.groups["panel.Root"].waitForExistence(timeout: 10))
+        app.typeKey(",", modifierFlags: .command)
+        let settings = app.windows["settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        let rootSection = settings.staticTexts
+            .matching(NSPredicate(format: "value ENDSWITH '/Root' OR label ENDSWITH '/Root'"))
+        XCTAssertTrue(
+            rootSection.firstMatch.waitForExistence(timeout: 20),
+            "the fixture folder is listed as an indexed root"
+        )
+        let attachment = XCTAttachment(screenshot: settings.screenshot())
+        attachment.name = "index settings"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 }
