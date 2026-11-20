@@ -85,6 +85,28 @@ public final class IndexStore: Sendable {
                 table.column("scannedAt", .double)
             }
         }
+        migrator.registerMigration("v2-search") { db in
+            // Name search: words split at separators, accents and case ignored, fast prefixes.
+            // ponytail: triggers slow full scans by a third (49k → 33k items/s); if it matters, skip
+            // them during full scans and run `INSERT INTO item_name(item_name) VALUES ('rebuild')` after.
+            try db.execute(sql: """
+            CREATE VIRTUAL TABLE item_name USING fts5(
+                name, content = 'item', content_rowid = 'id',
+                tokenize = "unicode61 remove_diacritics 2", prefix = '1 2 3'
+            );
+            CREATE TRIGGER item_name_insert AFTER INSERT ON item BEGIN
+                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
+            END;
+            CREATE TRIGGER item_name_delete AFTER DELETE ON item BEGIN
+                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
+            END;
+            CREATE TRIGGER item_name_update AFTER UPDATE OF name ON item BEGIN
+                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
+                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
+            END;
+            INSERT INTO item_name(item_name) VALUES ('rebuild');
+            """)
+        }
         return migrator
     }
 
