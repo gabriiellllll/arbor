@@ -53,8 +53,8 @@ Delivered in two pull requests: 3a (sidebar, workspaces, tags, history) and 3b (
 - [x] Parallel per-volume scan with `getattrlistbulk` into SQLite (tested; about 50 000 items per second, no mount point crossing, exclusions)
 - [x] Aggregated folder sizes propagated to parents (tested), shown and sorted in panels
 - [x] Incremental FSEvents updates with persisted event ID, catch-up, targeted rescan on `MustScanSubDirs` (tested with simulated events)
-- [ ] Size view: sort and proportional bar behind each row
-- [ ] Settings: indexed volumes, exclusions, index status, rebuild
+- [x] Size view: sort and proportional bar behind each row (View › Show Size Bars)
+- [x] Settings: indexed volumes, exclusions, index status, rebuild
 - Delivered in two pull requests: 4a (index engine, sizes in panels) and 4b (size view, settings). Finder tags are not indexed yet: reading them costs a system call per file; phase 5 decides with tag filters.
 
 ## Phase 5 — Search
