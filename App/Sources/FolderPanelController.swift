@@ -33,7 +33,7 @@ final class FolderPanelController: NSObject {
         }
     }
 
-    private(set) var items: [FolderItem] = []
+    var items: [FolderItem] = []
 
     /// Selected items changed (by the user or after a reload).
     var onSelectionChange: (([FolderItem]) -> Void)?
@@ -48,17 +48,21 @@ final class FolderPanelController: NSObject {
     var onRename: ((URL, String) -> Void)?
     /// The item whose name is being edited.
     var renamingItem: FolderItem?
+    /// Indexed total sizes of the items in a folder (canonical path), by name.
+    var sizeLookup: ((String) -> [String: Int64])?
+    /// Total sizes of the subfolders, from the index.
+    var folderSizes: [String: Int64] = [:]
 
     private(set) var mode: Mode = .list
-    private var sortKey: FolderSortKey = .name
-    private var ascending = true
-    private var loadGeneration = 0
+    var sortKey: FolderSortKey = .name
+    var ascending = true
+    var loadGeneration = 0
 
     let tableView = PanelTableView()
     private let tableScroll = NSScrollView()
     let collectionView = NSCollectionView()
     private let collectionScroll = NSScrollView()
-    private let messageLabel = NSTextField(wrappingLabelWithString: "")
+    let messageLabel = NSTextField(wrappingLabelWithString: "")
 
     init(url: URL, frame: CGRect) {
         self.url = url
@@ -92,88 +96,6 @@ final class FolderPanelController: NSObject {
         switch mode {
         case .list: tableView.selectedRowIndexes
         case .icons: IndexSet(collectionView.selectionIndexPaths.map(\.item))
-        }
-    }
-
-    // MARK: - Loading
-
-    /// Reads the folder in the background, keeping the selection by name.
-    func reload() {
-        loadGeneration += 1
-        let generation = loadGeneration
-        let url = url
-        Task {
-            let result = await Task.detached(priority: .userInitiated) {
-                Result { try DirectoryReader.entries(at: url) }
-            }.value
-            guard generation == loadGeneration else { return }
-            apply(result)
-        }
-    }
-
-    private func apply(_ result: Result<[DirectoryEntry], any Error>) {
-        let selectedNames = Set(selectedItems.map(\.name))
-        switch result {
-        case let .success(entries):
-            items = entries.filter { !$0.isHidden }
-                .map { FolderItem(entry: $0, in: url) }
-                .sorted(by: sortKey, ascending: ascending)
-            messageLabel.isHidden = true
-        case let .failure(error):
-            items = []
-            messageLabel.stringValue = Self.message(for: error)
-            messageLabel.isHidden = false
-        }
-        panelView.countLabel.stringValue = String(localized: "\(items.count) items")
-        reloadViews(selecting: selectedNames)
-    }
-
-    private static func message(for error: any Error) -> String {
-        switch (error as? POSIXError)?.code {
-        case .EPERM, .EACCES:
-            String(localized: "Arbor can’t read this folder. Grant Full Disk Access in System Settings to see it.")
-        case .ENOENT, .ENOTDIR:
-            String(localized: "This folder no longer exists.")
-        default:
-            String(localized: "This folder can’t be read: \(error.localizedDescription)")
-        }
-    }
-
-    private func reloadViews(selecting names: Set<String>) {
-        let indexes = IndexSet(items.indices.filter { names.contains(items[$0].name) })
-        tableView.reloadData()
-        collectionView.reloadData()
-        tableView.selectRowIndexes(indexes, byExtendingSelection: false)
-        collectionView.selectionIndexPaths = Set(indexes.map { IndexPath(item: $0, section: 0) })
-        onSelectionChange?(selectedItems)
-        onRowsMoved?()
-    }
-
-    func rowIndex(forName name: String) -> Int? {
-        items.firstIndex { $0.name == name }
-    }
-
-    /// Selects exactly the items named in `names` (those present), reporting the change.
-    func select(names: Set<String>) {
-        let indexes = IndexSet(items.indices.filter { names.contains(items[$0].name) })
-        switch mode {
-        case .list:
-            tableView.selectRowIndexes(indexes, byExtendingSelection: false)
-        case .icons:
-            collectionView.selectionIndexPaths = Set(indexes.map { IndexPath(item: $0, section: 0) })
-            onSelectionChange?(selectedItems)
-        }
-    }
-
-    /// Deselects the item named `name`; the selection change closes its child panel.
-    func deselect(_ name: String) {
-        guard let index = items.firstIndex(where: { $0.name == name }) else { return }
-        switch mode {
-        case .list:
-            tableView.deselectRow(index)
-        case .icons:
-            collectionView.deselectItems(at: [IndexPath(item: index, section: 0)])
-            onSelectionChange?(selectedItems)
         }
     }
 
@@ -333,8 +255,9 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
                 for: (try? FinderTags.tags(of: item.url)) ?? []
             )
         case .size:
-            cell.textField?.stringValue = item.entry.kind == .directory
-                ? "--" : ByteCountFormatter.string(fromByteCount: item.entry.size, countStyle: .file)
+            let size = item.entry.kind == .directory ? folderSizes[item.name] : item.entry.size
+            cell.textField?.stringValue = size.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+                ?? "--"
         case .modified:
             cell.textField?.stringValue = item.entry.modified.formatted(date: .numeric, time: .shortened)
         }
@@ -356,7 +279,7 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
         let selectedNames = Set(selectedItems.map(\.name))
         sortKey = key
         ascending = descriptor.ascending
-        items = items.sorted(by: key, ascending: ascending)
+        items = items.sorted(by: key, ascending: ascending, folderSizes: folderSizes)
         reloadViews(selecting: selectedNames)
     }
 }
