@@ -173,4 +173,24 @@ final class CanvasControllerTests: XCTestCase {
         XCTAssertTrue(controller.panels.isEmpty)
         XCTAssertTrue(controller.tree.roots.isEmpty)
     }
+
+    func testBackAndForwardRevisitOpenedFolders() throws {
+        let rootPanel = try XCTUnwrap(openRootAndWait())
+        rootPanel.select(names: ["Alpha"])
+        rootPanel.select(names: ["Beta"])
+        XCTAssertEqual(
+            controller.history.entries.map { URL(fileURLWithPath: $0).lastPathComponent },
+            ["Root", "Alpha", "Beta"]
+        )
+
+        controller.goBack()
+        let alpha = try XCTUnwrap(panel(named: "Alpha"), "the closed folder reopens")
+        XCTAssertEqual(controller.activePanel, alpha.id)
+        XCTAssertEqual(controller.history.entries.count, 3, "going back records nothing")
+
+        controller.goBack()
+        XCTAssertEqual(controller.activePanel, panel(named: "Root")?.id)
+        controller.goForward()
+        XCTAssertEqual(controller.activePanel, panel(named: "Alpha")?.id)
+    }
 }
