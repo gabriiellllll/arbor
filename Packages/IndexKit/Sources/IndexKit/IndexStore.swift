@@ -118,6 +118,19 @@ public final class IndexStore: Sendable {
         }
     }
 
+    public func setExclusions(_ id: Int64, _ exclusions: [String]) throws {
+        let encoded = try String(data: JSONEncoder().encode(exclusions), encoding: .utf8) ?? "[]"
+        try writer.write { db in
+            try db.execute(sql: "UPDATE root SET exclusions = ? WHERE id = ?", arguments: [encoded, id])
+        }
+    }
+
+    /// Items and total size indexed under a root.
+    public func summary(of root: IndexRoot) throws -> (items: Int64, totalSize: Int64) {
+        let item = try item(root.itemID)
+        return (item?.descendants ?? 0, item?.totalSize ?? 0)
+    }
+
     public func removeRoot(_ id: Int64) throws {
         try writer.write { db in
             let itemID = try Int64.fetchOne(db, sql: "SELECT itemID FROM root WHERE id = ?", arguments: [id])

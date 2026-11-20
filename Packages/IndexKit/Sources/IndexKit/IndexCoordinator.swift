@@ -39,6 +39,35 @@ public final class IndexCoordinator: @unchecked Sendable {
         }
     }
 
+    /// Starts indexing a folder or volume: scans it, then watches it with the others.
+    public func addRoot(path: String, exclusions: [String]) {
+        queue.async { [self] in
+            guard let root = try? store.addRoot(path: path, exclusions: exclusions) else { return }
+            try? scan(root)
+            startWatching()
+        }
+    }
+
+    /// Stops indexing a root and drops its items.
+    public func removeRoot(_ rootID: Int64) {
+        queue.async { [self] in
+            guard let root = try? store.roots().first(where: { $0.id == rootID }) else { return }
+            try? store.removeRoot(rootID)
+            startWatching()
+            onChange?([root.path])
+        }
+    }
+
+    /// Changes a root's exclusions and scans it again with them.
+    public func setExclusions(_ rootID: Int64, _ exclusions: [String]) {
+        queue.async { [self] in
+            try? store.setExclusions(rootID, exclusions)
+            guard let root = try? store.roots().first(where: { $0.id == rootID }) else { return }
+            try? scan(root)
+            startWatching()
+        }
+    }
+
     /// Drops a root's index and scans it again.
     public func rebuild(_ rootID: Int64) {
         queue.async { [self] in
@@ -87,7 +116,10 @@ public final class IndexCoordinator: @unchecked Sendable {
     }
 
     private func startWatching() {
-        guard let roots = try? store.roots(), !roots.isEmpty else { return }
+        guard let roots = try? store.roots(), !roots.isEmpty else {
+            watcher.watch([])
+            return
+        }
         let since = roots.compactMap(\.lastEventID).min()
         watcher.watch(Set(roots.map(\.path)), since: since)
     }
