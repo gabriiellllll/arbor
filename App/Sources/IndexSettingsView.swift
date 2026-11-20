@@ -128,6 +128,11 @@ struct IndexSettingsView: View {
                 ProgressView().controlSize(.small)
                 Text("Scanning “\(path)”: \(items.formatted()) items")
             }
+        case let .readingTags(path):
+            HStack {
+                ProgressView().controlSize(.small)
+                Text("Reading Finder tags in “\(path)”")
+            }
         }
     }
 

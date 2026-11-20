@@ -13,6 +13,8 @@ public struct IndexRoot: Equatable, Sendable {
     /// The last FSEvents event applied; changes after it are caught up on launch.
     public let lastEventID: UInt64?
     public let scannedAt: Date?
+    /// When Finder tags were last read for the whole root.
+    public let tagsReadAt: Date?
 }
 
 /// An indexed file or folder. For folders, `totalSize` and `totalAllocated` include everything
@@ -106,6 +108,17 @@ public final class IndexStore: Sendable {
             END;
             INSERT INTO item_name(item_name) VALUES ('rebuild');
             """)
+        }
+        migrator.registerMigration("v3-tags") { db in
+            try db.create(table: "tag", options: [.withoutRowID]) { table in
+                table.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
+                table.column("name", .text).notNull()
+                table.primaryKey(["itemID", "name"])
+            }
+            try db.create(index: "tag_name", on: "tag", columns: ["name"])
+            try db.alter(table: "root") { table in
+                table.add(column: "tagsReadAt", .double)
+            }
         }
         return migrator
     }
@@ -288,10 +301,12 @@ public final class IndexStore: Sendable {
         let exclusions = try JSONDecoder().decode([String].self, from: Data((row["exclusions"] as String).utf8))
         let eventID: Int64? = row["lastEventID"]
         let scannedAt: Double? = row["scannedAt"]
+        let tagsReadAt: Double? = row["tagsReadAt"]
         return IndexRoot(
             id: row["id"], path: row["path"], itemID: row["itemID"], exclusions: exclusions,
             volumeUUID: row["volumeUUID"], lastEventID: eventID.map { UInt64(bitPattern: $0) },
-            scannedAt: scannedAt.map(Date.init(timeIntervalSince1970:))
+            scannedAt: scannedAt.map(Date.init(timeIntervalSince1970:)),
+            tagsReadAt: tagsReadAt.map(Date.init(timeIntervalSince1970:))
         )
     }
 

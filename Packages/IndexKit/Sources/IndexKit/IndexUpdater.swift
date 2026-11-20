@@ -57,8 +57,10 @@ public struct IndexUpdater: Sendable {
     private func rescan(_ folder: IndexScanner.Folder, root: IndexRoot) throws {
         try store.writer
             .write { db in try db.execute(sql: "DELETE FROM item WHERE parent = ?", arguments: [folder.id]) }
-        _ = try IndexScanner(store: store).scanSubtree(folder, root: root, control: ScanControl(), progress: { _ in })
+        let scanner = IndexScanner(store: store)
+        _ = try scanner.scanSubtree(folder, root: root, control: ScanControl(), progress: { _ in })
         try store.aggregate(subtreeOf: folder.id)
+        try scanner.readTags(below: folder, control: ScanControl())
         try store.propagateUp(from: folder.id)
     }
 
@@ -104,15 +106,14 @@ public struct IndexUpdater: Sendable {
                 newFolders.append(IndexScanner.Folder(id: id, path: path, depth: folder.depth + 1))
             }
         }
+        let scanner = IndexScanner(store: store)
         for newFolder in newFolders {
-            _ = try IndexScanner(store: store).scanSubtree(
-                newFolder,
-                root: root,
-                control: ScanControl(),
-                progress: { _ in }
-            )
+            _ = try scanner.scanSubtree(newFolder, root: root, control: ScanControl(), progress: { _ in })
             try store.aggregate(subtreeOf: newFolder.id)
+            try scanner.readTags(below: newFolder, control: ScanControl())
         }
+        // Tag changes only touch an extended attribute (dates don't change): re-read them all.
+        try store.readTags(ofChildrenOf: folder)
         try store.propagateUp(from: folder.id)
     }
 }
