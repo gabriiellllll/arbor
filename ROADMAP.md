@@ -43,10 +43,10 @@ Delivered in two pull requests: 3a (sidebar, workspaces, tags, history) and 3b (
 - [x] Locations: volumes, iCloud Drive, OneDrive if present, Computer
 - [x] Finder tags: read and write (row dots, context menu, inspector)
 - [x] Canvas navigation history (Back ⌘[, Forward ⌘])
-- [ ] File operation queue: progress, pause, cancel, conflicts (replace, keep both, skip, apply to all) (tested)
-- [ ] Drag and drop between panels and with Finder (move, ⌥ copy)
-- [ ] Multi-selection across panels: copy, move, rename, trash
-- [ ] Undo / redo of file operations (tested)
+- [x] File operation queue: progress, pause, cancel, conflicts (replace, keep both, skip, stop, apply to all) (tested)
+- [x] Drag and drop between panels and with Finder (move, ⌥ copy)
+- [x] Multi-selection across panels: copy, paste, move here, rename, trash
+- [x] Undo / redo of file operations (tested)
 - Moved: the Shared section comes with network shares (phase 6); the clickable Tags section comes with search panels (phase 5)
 
 ## Phase 4 — Internal index
