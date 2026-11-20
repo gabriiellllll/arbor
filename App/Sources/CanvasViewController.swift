@@ -46,6 +46,8 @@ final class CanvasViewController: NSViewController {
     var onAddFavorites: (([URL]) -> Void)?
     /// A file operation to run, with its undo name.
     var onPerform: ((FileOperation, String) -> Void)?
+    /// Indexed sizes of a folder's items (canonical path), by name.
+    var sizeLookup: ((String) -> [String: Int64])?
     /// Folders opened, for Back and Forward.
     var history = NavigationHistory<String>()
     /// Set while Back or Forward reopens a folder, so it is not recorded again.
@@ -143,6 +145,7 @@ final class CanvasViewController: NSViewController {
         let frame = pendingFrames.removeValue(forKey: url.path) ?? proposed
         tree.setFrame(frame, for: id)
         let panel = FolderPanelController(url: url, frame: frame)
+        panel.sizeLookup = { [weak self] path in self?.sizeLookup?(path) ?? [:] }
         panel.onAddFavorites = { [weak self] urls in self?.onAddFavorites?(urls) }
         panel.tint = color(of: id)
         panel.onSelectionChange = { [weak self] items in self?.selectionChanged(in: id, to: items) }
@@ -256,6 +259,13 @@ final class CanvasViewController: NSViewController {
             branches[panel.id] = (curve, color(of: panel.id))
         }
         canvasView.branchesView.setBranches(branches)
+    }
+
+    /// The index changed: panels show the new folder sizes.
+    func indexChanged() {
+        for panel in panels.values {
+            panel.refreshSizes()
+        }
     }
 
     // MARK: - Live updates
