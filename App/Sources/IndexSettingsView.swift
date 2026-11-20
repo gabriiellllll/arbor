@@ -85,6 +85,7 @@ struct IndexSettingsView: View {
             ForEach(model.roots) { row in
                 Section(row.root.path) {
                     LabeledContent("Indexed", value: summary(row))
+                        .accessibilityIdentifier("indexedRoot")
                     ForEach(row.root.exclusions, id: \.self) { path in
                         HStack {
                             Text(path).lineLimit(1).truncationMode(.middle)

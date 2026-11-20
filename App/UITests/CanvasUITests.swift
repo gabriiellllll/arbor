@@ -213,12 +213,13 @@ final class CanvasUITests: XCTestCase {
         app.typeKey(",", modifierFlags: .command)
         let settings = app.windows["settings"]
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
-        let rootSection = settings.staticTexts
-            .matching(NSPredicate(format: "value ENDSWITH '/Root' OR label ENDSWITH '/Root'"))
-        XCTAssertTrue(
-            rootSection.firstMatch.waitForExistence(timeout: 20),
-            "the fixture folder is listed as an indexed root"
-        )
+        let indexedRoot = settings.descendants(matching: .any).matching(identifier: "indexedRoot").firstMatch
+        let listed = indexedRoot.waitForExistence(timeout: 20)
+        if !listed {
+            // Leaves evidence in the CI log.
+            print(settings.debugDescription)
+        }
+        XCTAssertTrue(listed, "the fixture folder is listed as an indexed root")
         let attachment = XCTAttachment(screenshot: settings.screenshot())
         attachment.name = "index settings"
         attachment.lifetime = .keepAlways
