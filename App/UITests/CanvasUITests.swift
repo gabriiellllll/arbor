@@ -172,28 +172,24 @@ final class CanvasUITests: XCTestCase {
     }
 
     @MainActor
-    func testDraggingAFileToAnotherPanelMovesIt() {
-        XCTAssertTrue(row("notes.txt", in: "Root").waitForExistence(timeout: 10))
-        row("Beta", in: "Root").click()
-        let betaList = app.tables["list.Beta"]
-        XCTAssertTrue(betaList.waitForExistence(timeout: 5))
-        // ⌘ keeps Beta selected (its panel stays open) while picking up notes.txt. Pausing over the
-        // target lets AppKit accept the drop before the mouse goes up.
-        XCUIElement.perform(withKeyModifiers: .command) {
-            row("notes.txt", in: "Root").click(
-                forDuration: 0.6, thenDragTo: betaList, withVelocity: .slow, thenHoldForDuration: 0.6
-            )
-        }
-        let arrived = row("notes.txt", in: "Beta").waitForExistence(timeout: 5)
+    func testDraggingAnItemToAnotherPanelMovesIt() {
+        XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
+        row("Alpha", in: "Root").click()
+        XCTAssertTrue(row("OnlyA", in: "Alpha").waitForExistence(timeout: 5))
+        // Pausing over the target lets AppKit accept the drop before the mouse goes up.
+        row("OnlyA", in: "Alpha").click(
+            forDuration: 0.6, thenDragTo: app.tables["list.Root"], withVelocity: .slow, thenHoldForDuration: 0.6
+        )
+        let arrived = row("OnlyA", in: "Root").waitForExistence(timeout: 5)
         if !arrived {
             // Leaves evidence in the CI log and result bundle.
             attachScreenshot("drag not applied")
             print(app.windows["main"].debugDescription)
         }
-        XCTAssertTrue(arrived, "moved into Beta")
+        XCTAssertTrue(arrived, "moved into Root")
         let gone = NSPredicate(format: "exists == false")
         XCTAssertEqual(
-            XCTWaiter.wait(for: [expectation(for: gone, evaluatedWith: row("notes.txt", in: "Root"))], timeout: 5),
+            XCTWaiter.wait(for: [expectation(for: gone, evaluatedWith: row("OnlyA", in: "Alpha"))], timeout: 5),
             .completed
         )
         attachScreenshot("moved by drag")
