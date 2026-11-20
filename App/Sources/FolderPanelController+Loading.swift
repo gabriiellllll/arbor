@@ -77,6 +77,15 @@ extension FolderPanelController {
         let sizes = sizeLookup?(canonicalPath) ?? [:]
         guard sizes != folderSizes else { return }
         folderSizes = sizes
+        if showsSizeBars {
+            // Bar lengths depend on every size: redraw all rows.
+            let selected = Set(selectedItems.map(\.name))
+            if sortKey == .size {
+                items = items.sorted(by: sortKey, ascending: ascending, folderSizes: folderSizes)
+            }
+            reloadViews(selecting: selected)
+            return
+        }
         if sortKey == .size {
             let selected = Set(selectedItems.map(\.name))
             items = items.sorted(by: sortKey, ascending: ascending, folderSizes: folderSizes)

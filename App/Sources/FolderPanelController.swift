@@ -52,6 +52,19 @@ final class FolderPanelController: NSObject {
     var sizeLookup: ((String) -> [String: Int64])?
     /// Total sizes of the subfolders, from the index.
     var folderSizes: [String: Int64] = [:]
+    /// Draws a bar behind each row, proportional to the item's size.
+    var showsSizeBars = false {
+        didSet {
+            if showsSizeBars != oldValue {
+                tableView.reloadData()
+            }
+        }
+    }
+
+    /// Each row's size bar length (files: own size; folders: indexed total).
+    var sizeFractions: [Double] {
+        SizeBars.fractions(items.map { $0.entry.kind == .directory ? folderSizes[$0.name] ?? 0 : $0.entry.size })
+    }
 
     private(set) var mode: Mode = .list
     var sortKey: FolderSortKey = .name
@@ -264,8 +277,9 @@ extension FolderPanelController: NSTableViewDataSource, NSTableViewDelegate {
         return cell
     }
 
-    func tableView(_: NSTableView, rowViewForRow _: Int) -> NSTableRowView? {
-        TintedRowView(tint: tint)
+    func tableView(_: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        let fractions = showsSizeBars ? sizeFractions : []
+        return TintedRowView(tint: tint, sizeFraction: fractions.indices.contains(row) ? fractions[row] : 0)
     }
 
     func tableViewSelectionDidChange(_: Notification) {

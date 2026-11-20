@@ -58,6 +58,22 @@ final class IndexSizesTests: XCTestCase {
         XCTAssertEqual(panel.items.map(\.name), ["Small", "Big"], "re-sorted when the index changes")
     }
 
+    func testSizeBarsFollowSizes() async throws {
+        let panel = FolderPanelController(url: folder, frame: CGRect(x: 0, y: 0, width: 400, height: 400))
+        panel.sizeLookup = { _ in ["Big": 3000, "Small": 750] }
+        panel.reload()
+        try await waitUntil("panel loads") { panel.items.count == 2 }
+        func bar(_ name: String) -> Double? {
+            panel.rowIndex(forName: name).flatMap {
+                (panel.tableView(panel.tableView, rowViewForRow: $0) as? TintedRowView)?.sizeFraction
+            }
+        }
+        XCTAssertEqual(bar("Big"), 0, "no bars until shown")
+        panel.showsSizeBars = true
+        XCTAssertEqual(bar("Big"), 1)
+        XCTAssertEqual(bar("Small"), 0.25)
+    }
+
     func testFoldersWithoutIndexedSizesShowDashes() async throws {
         let panel = FolderPanelController(url: folder, frame: CGRect(x: 0, y: 0, width: 400, height: 400))
         panel.reload()
