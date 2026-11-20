@@ -79,6 +79,17 @@ final class IndexCoordinatorTests: XCTestCase {
         relaunched.stop()
     }
 
+    func testSeveralRootsAreScannedCorrectly() throws {
+        try temp.file("other/b.bin", size: 40)
+        let store = try IndexStore.open(at: databaseURL)
+        let path = dataPath
+        let other = temp.url.appendingPathComponent("other").path
+        _ = try store.addRoot(path: path, exclusions: [])
+        _ = try store.addRoot(path: other, exclusions: [])
+        run(store) { Self.total(store, path) == 10 && Self.total(store, other) == 40 }.stop()
+        XCTAssertTrue(try store.roots().allSatisfy { $0.scannedAt != nil })
+    }
+
     func testANewRootOrAnotherEventHistoryNeedsAScan() throws {
         let store = try IndexStore.inMemory()
         let root = try store.addRoot(path: temp.url.path, exclusions: [])

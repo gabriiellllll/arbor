@@ -53,9 +53,16 @@ public final class IndexCoordinator: @unchecked Sendable {
         watcher.watch([])
     }
 
+    /// Scans the roots that need it, one volume per thread, then watches all roots.
     private func prepareRoots() throws {
-        for root in try store.roots() where Self.needsScan(root) {
-            try scan(root)
+        let byVolume = try Dictionary(grouping: store.roots().filter(Self.needsScan)) {
+            FolderWatcher.volumeUUID(for: $0.path) ?? $0.path
+        }
+        let volumes = Array(byVolume.values)
+        DispatchQueue.concurrentPerform(iterations: volumes.count) { index in
+            for root in volumes[index] {
+                try? scan(root)
+            }
         }
         startWatching()
     }
