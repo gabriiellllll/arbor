@@ -40,6 +40,7 @@ final class MainSplitViewController: NSSplitViewController {
         sidebar.onSwitchWorkspace = { [weak self] id in self?.switchWorkspace(to: id) }
         sidebar.onCreateWorkspace = { [weak self] in self?.createWorkspace() }
         sidebar.onDeleteWorkspace = { [weak self] id in self?.deleteWorkspace(id) }
+        sidebar.onOpenTag = { [weak self] name in self?.canvas.openSearch(SearchSpec(tag: name)) }
         canvas.onInspectedItemChange = { [weak self] item in self?.inspectorModel.item = item }
         canvas.onAddFavorites = { [weak self] urls in self?.sidebar.addFavorites(urls, at: nil) }
 

@@ -57,8 +57,10 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         if let index {
             canvas.sizeLookup = { [weak index] path in index?.sizes(ofFolder: path) ?? [:] }
             canvas.index = index
+            split.sidebar.tagNames = { [weak index] in index?.tagNames() ?? [] }
             index.onChange = { [weak self] _ in
                 self?.canvas.indexChanged()
+                self?.split.sidebar.refreshTags()
                 self?.refreshSettings()
             }
             index.onStatus = { [weak self] _ in self?.refreshSettings() }

@@ -8,10 +8,11 @@ final class SidebarNode: NSObject {
         case workspace(Workspace)
         case favorite(Favorite)
         case place(Place)
+        case tag(String)
     }
 
     enum Section {
-        case workspaces, favorites, locations
+        case workspaces, favorites, locations, tags
     }
 
     let kind: Kind
@@ -23,7 +24,8 @@ final class SidebarNode: NSObject {
     }
 }
 
-/// Sidebar: workspaces, favorites (each with its branch color) and locations.
+/// Sidebar: workspaces, favorites (each with its branch color), locations and the Finder
+/// tags found by the index.
 @MainActor
 final class SidebarViewController: NSViewController {
     /// Open a folder as a root panel, in the given color (favorites) or the least used one.
@@ -31,6 +33,14 @@ final class SidebarViewController: NSViewController {
     var onSwitchWorkspace: ((Int64) -> Void)?
     var onCreateWorkspace: (() -> Void)?
     var onDeleteWorkspace: ((Int64) -> Void)?
+    /// Open a search panel of the items carrying a tag.
+    var onOpenTag: ((String) -> Void)?
+    /// Finder tags in the index, most used first.
+    var tagNames: (() -> [String])? {
+        didSet { reload() }
+    }
+
+    private var tags: [String] = []
 
     let database: AppDatabase
     let outlineView = SidebarOutlineView()
@@ -81,13 +91,24 @@ final class SidebarViewController: NSViewController {
         let workspaces = (try? database.workspaces()) ?? []
         let favorites = (try? database.favorites()) ?? []
         currentWorkspaceID = try? database.currentWorkspaceID()
+        tags = tagNames?() ?? []
         sections = [
             SidebarNode(.header(.workspaces), children: workspaces.map { SidebarNode(.workspace($0)) }),
             SidebarNode(.header(.favorites), children: favorites.map { SidebarNode(.favorite($0)) }),
             SidebarNode(.header(.locations), children: Locations.all().map { SidebarNode(.place($0)) }),
         ]
+        if !tags.isEmpty {
+            sections.append(SidebarNode(.header(.tags), children: tags.map { SidebarNode(.tag($0)) }))
+        }
         outlineView.reloadData()
         outlineView.expandItem(nil, expandChildren: true)
+    }
+
+    /// The index changed: rebuilds the outline only if its tags did.
+    func refreshTags() {
+        if (tagNames?() ?? []) != tags {
+            reload()
+        }
     }
 
     func node(at row: Int) -> SidebarNode? {
@@ -112,6 +133,8 @@ final class SidebarViewController: NSViewController {
             onOpen?(favorite.url, favorite.colorIndex)
         case let .place(place):
             onOpen?(place.url, nil)
+        case let .tag(name):
+            onOpenTag?(name)
         case .header:
             break
         }
@@ -177,6 +200,11 @@ extension SidebarViewController: NSOutlineViewDataSource, NSOutlineViewDelegate 
             )
         case let .place(place):
             return SidebarCell.row(title: place.name, icon: NSWorkspace.shared.icon(forFile: place.url.path), dot: nil)
+        case let .tag(name):
+            return SidebarCell.row(
+                title: name, icon: NSImage(systemSymbolName: "tag", accessibilityDescription: nil),
+                dot: TagColors.color(for: name)
+            )
         }
     }
 
@@ -185,6 +213,7 @@ extension SidebarViewController: NSOutlineViewDataSource, NSOutlineViewDelegate 
         case .workspaces: String(localized: "Workspaces")
         case .favorites: String(localized: "Favorites")
         case .locations: String(localized: "Locations")
+        case .tags: String(localized: "Tags")
         }
     }
 }
