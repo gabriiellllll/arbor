@@ -3,7 +3,7 @@ import Foundation
 
 /// UI tests launch the app with `ARBOR_UI_TEST_FIXTURE=1`: the app then builds a small
 /// folder tree in a fresh temporary directory and opens it, so tests never touch user files:
-/// Root/{Alpha/{Inner, OnlyA, data.bin (2000 bytes)}, Beta/{Inner}, notes.txt}.
+/// Root/{Alpha/{Inner, OnlyA, data.bin (2000 bytes)}, Beta/{Inner}, notes.txt (tagged Red)}.
 enum UITestFixture {
     static let environmentKey = "ARBOR_UI_TEST_FIXTURE"
 
@@ -21,6 +21,7 @@ enum UITestFixture {
             )
         }
         try Data("notes".utf8).write(to: root.appendingPathComponent("notes.txt"))
+        try FinderTags.setTags(["Red"], on: root.appendingPathComponent("notes.txt"))
         try Data(count: 2000).write(to: root.appendingPathComponent("Alpha/data.bin"))
         return root
     }
