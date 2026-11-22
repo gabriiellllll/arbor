@@ -98,3 +98,29 @@ final class SearchPanelTests: XCTestCase {
         XCTAssertEqual(restored.searchPanels.values.map(\.spec), [SearchSpec(text: "tiny")])
     }
 }
+
+/// The sidebar's Tags section.
+@MainActor
+final class SidebarTagsTests: XCTestCase {
+    func testTagsSectionListsIndexedTagsAndRefreshesOnlyWhenTheyChange() throws {
+        let sidebar = try SidebarViewController(database: AppDatabase.inMemory())
+        sidebar.loadView()
+        XCTAssertNil(sidebar.section(.tags), "no section without tags")
+
+        var tags = ["Red", "Work"]
+        sidebar.tagNames = { tags }
+        let section = try XCTUnwrap(sidebar.section(.tags))
+        XCTAssertEqual(section.children.compactMap { node in
+            if case let .tag(name) = node.kind {
+                return name
+            }
+            return nil
+        }, tags)
+
+        sidebar.refreshTags()
+        XCTAssertTrue(sidebar.section(.tags) === section, "unchanged tags keep the outline")
+        tags = ["Red"]
+        sidebar.refreshTags()
+        XCTAssertEqual(sidebar.section(.tags)?.children.count, 1)
+    }
+}

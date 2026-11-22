@@ -39,7 +39,7 @@ extension SidebarViewController: NSMenuDelegate, NSTextFieldDelegate {
             add(String(localized: "Remove from Favorites"), #selector(removeFavorite), to: menu)
         case .place:
             add(String(localized: "Add to Favorites"), #selector(addPlaceToFavorites), to: menu)
-        case .header:
+        case .header, .tag:
             break
         }
     }
