@@ -225,4 +225,28 @@ final class CanvasUITests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+
+    @MainActor
+    func testSearchFindsAResultAndRevealsItsFolderChain() {
+        XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
+        app.typeKey("f", modifierFlags: .command)
+        app.typeText("data")
+        let result = app.tables["searchResults"].staticTexts["data.bin"]
+        XCTAssertTrue(result.waitForExistence(timeout: 20), "found once the index is ready")
+        result.doubleClick()
+        XCTAssertTrue(app.groups["panel.Alpha"].waitForExistence(timeout: 5))
+        let revealed = app.tables["list.Alpha"].tableRows.containing(.staticText, identifier: "data.bin").firstMatch
+        let selected = expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: revealed)
+        XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 5), .completed, "the result is selected")
+        attachScreenshot("search revealed data.bin")
+    }
+
+    @MainActor
+    func testSidebarTagOpensATagSearch() {
+        let tag = app.outlines["sidebar"].staticTexts["Red"]
+        XCTAssertTrue(tag.waitForExistence(timeout: 20), "listed once the index has read the tags")
+        tag.click()
+        XCTAssertTrue(app.tables["searchResults"].staticTexts["notes.txt"].waitForExistence(timeout: 5))
+        attachScreenshot("tag search")
+    }
 }
