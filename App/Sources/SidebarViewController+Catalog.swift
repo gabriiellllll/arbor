@@ -74,6 +74,7 @@ struct DiskDetailsView: View {
             if !isConnected {
                 Text("Not plugged in. These details were saved when it was last connected.")
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                 row("Vendor", details.vendor)
