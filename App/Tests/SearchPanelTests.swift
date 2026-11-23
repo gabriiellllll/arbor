@@ -102,6 +102,24 @@ final class SearchPanelTests: XCTestCase {
         restored.restore(snapshot)
         XCTAssertEqual(restored.searchPanels.values.map(\.spec), [SearchSpec(text: "tiny")])
     }
+
+    func testSearchPanelShowsExcerptsOfDocumentText() async throws {
+        try Data("Meeting in Zanzibar".utf8).write(to: folder.appendingPathComponent("Small/notes.md"))
+        let service = try IndexService.openForUITests(fixture: folder)
+        service.start()
+        defer { service.stop() }
+        let canvas = CanvasViewController(defaults: defaults)
+        canvas.loadView()
+        canvas.index = service
+        service.onChange = { _ in canvas.indexChanged() }
+
+        canvas.search(text: "zanzibar")
+        let search = try XCTUnwrap(canvas.searchPanels.values.first)
+        try await waitUntil("document text found") { search.results.first?.excerpt == "Meeting in Zanzibar" }
+        let column = search.tableView.column(withIdentifier: NSUserInterfaceItemIdentifier("excerpt"))
+        let cell = search.tableView.view(atColumn: column, row: 0, makeIfNecessary: true) as? NSTableCellView
+        XCTAssertEqual(cell?.textField?.stringValue, "Meeting in Zanzibar")
+    }
 }
 
 /// The sidebar's Tags section.

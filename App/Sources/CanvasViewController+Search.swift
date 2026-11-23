@@ -11,7 +11,7 @@ enum PanelContent: Equatable {
 /// Search panels: roots of the canvas tree (laid out like folder roots) whose results can
 /// open their folder chain.
 extension CanvasViewController {
-    static let searchPanelSize = CGSize(width: 560, height: 420)
+    static let searchPanelSize = CGSize(width: 720, height: 420)
 
     var activeSearch: SearchPanelController? {
         activePanel.flatMap { searchPanels[$0] }
