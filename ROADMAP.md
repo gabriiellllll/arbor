@@ -58,11 +58,15 @@ Delivered in two pull requests: 3a (sidebar, workspaces, tags, history) and 3b (
 - Delivered in two pull requests: 4a (index engine, sizes in panels) and 4b (size view, settings). Finder tags are not indexed yet: reading them costs a system call per file; phase 5 decides with tag filters.
 
 ## Phase 5 — Search
-- [ ] Instant name search (FTS5 + prefixes)
+- [x] Instant name search (FTS5 + prefixes)
 - [ ] Full-text extraction: PDF, .docx / .xlsx / .pptx, plain text / Markdown / code (background, low priority)
-- [ ] Search results as a canvas panel, each result can open its parent chain
-- [ ] Filters: type, size, date, tag, volume
-- [ ] Sidebar Tags section: clicking a tag opens a panel of the items carrying it
+- [x] Search results as a canvas panel, each result can open its parent chain
+- [x] Filters: type, size, date, tag, volume
+- [x] Sidebar Tags section: clicking a tag opens a panel of the items carrying it
+
+Phase 5a notes: Finder tags are read into the index in a background pass after each scan
+and on every change. A result inside a hidden folder reveals its chain only down to the
+last visible folder (panels hide hidden items). Full text (5b) is next.
 
 ## Phase 6 — External disks and shares
 - [ ] Stable volume identity (volume UUID, DiskArbitration)
