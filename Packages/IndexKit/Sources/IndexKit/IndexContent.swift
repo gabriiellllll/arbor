@@ -56,13 +56,19 @@ extension IndexStore {
     private static func unreadBatch(_ roots: [Int64: String], _ db: Database) throws -> [UnreadItem] {
         try Row.fetchAll(
             db, sql: "SELECT id, rootID, name, kind, size, modified FROM item WHERE contentRead = 0 LIMIT 100"
-        ).map { row in
+        ).map { row -> UnreadItem in
             let id: Int64 = row["id"]
             let size: Int64 = row["size"]
             let wanted = row["kind"] == Kind.file.rawValue && size <= maxContentFileSize
                 && TextExtractor.canExtract(name: row["name"])
-            let path = try roots[row["rootID"]].flatMap { wanted ? try path(of: id, rootPath: $0, db) : nil }
-            return UnreadItem(id: id, modified: row["modified"], size: size, path: path)
+            let rootID: Int64 = row["rootID"]
+            let rootPath = roots[rootID]
+            let itemPath: String? = if wanted, let rootPath {
+                try Self.path(of: id, rootPath: rootPath, db)
+            } else {
+                nil
+            }
+            return UnreadItem(id: id, modified: row["modified"], size: size, path: itemPath)
         }
     }
 }
