@@ -55,74 +55,6 @@ public final class IndexStore: Sendable {
         try IndexStore(DatabaseQueue())
     }
 
-    private static var migrator: DatabaseMigrator {
-        var migrator = DatabaseMigrator()
-        migrator.registerMigration("v1") { db in
-            try db.create(table: "item") { table in
-                table.autoIncrementedPrimaryKey("id")
-                table.column("parent", .integer).references("item", onDelete: .cascade)
-                table.column("rootID", .integer).notNull()
-                table.column("name", .text).notNull()
-                table.column("kind", .integer).notNull()
-                table.column("fileID", .integer)
-                table.column("size", .integer).notNull()
-                table.column("allocated", .integer).notNull()
-                table.column("totalSize", .integer).notNull()
-                table.column("totalAllocated", .integer).notNull()
-                table.column("descendants", .integer).notNull().defaults(to: 0)
-                table.column("created", .double)
-                table.column("modified", .double)
-                table.column("hidden", .boolean).notNull()
-                table.column("depth", .integer).notNull()
-                table.uniqueKey(["parent", "name"])
-            }
-            try db.create(index: "item_root_depth", on: "item", columns: ["rootID", "depth"])
-            try db.create(table: "root") { table in
-                table.autoIncrementedPrimaryKey("id")
-                table.column("path", .text).notNull().unique()
-                table.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
-                table.column("exclusions", .text).notNull()
-                table.column("volumeUUID", .text)
-                table.column("lastEventID", .integer)
-                table.column("scannedAt", .double)
-            }
-        }
-        migrator.registerMigration("v2-search") { db in
-            // Name search: words split at separators, accents and case ignored, fast prefixes.
-            // ponytail: triggers slow full scans by a third (49k → 33k items/s); if it matters, skip
-            // them during full scans and run `INSERT INTO item_name(item_name) VALUES ('rebuild')` after.
-            try db.execute(sql: """
-            CREATE VIRTUAL TABLE item_name USING fts5(
-                name, content = 'item', content_rowid = 'id',
-                tokenize = "unicode61 remove_diacritics 2", prefix = '1 2 3'
-            );
-            CREATE TRIGGER item_name_insert AFTER INSERT ON item BEGIN
-                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
-            END;
-            CREATE TRIGGER item_name_delete AFTER DELETE ON item BEGIN
-                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
-            END;
-            CREATE TRIGGER item_name_update AFTER UPDATE OF name ON item BEGIN
-                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
-                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
-            END;
-            INSERT INTO item_name(item_name) VALUES ('rebuild');
-            """)
-        }
-        migrator.registerMigration("v3-tags") { db in
-            try db.create(table: "tag", options: [.withoutRowID]) { table in
-                table.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
-                table.column("name", .text).notNull()
-                table.primaryKey(["itemID", "name"])
-            }
-            try db.create(index: "tag_name", on: "tag", columns: ["name"])
-            try db.alter(table: "root") { table in
-                table.add(column: "tagsReadAt", .double)
-            }
-        }
-        return migrator
-    }
-
     // MARK: - Roots
 
     public func roots() throws -> [IndexRoot] {
@@ -317,5 +249,91 @@ public final class IndexStore: Sendable {
             size: row["size"], totalSize: row["totalSize"], totalAllocated: row["totalAllocated"],
             descendants: row["descendants"], modified: Date(timeIntervalSince1970: row["modified"] ?? 0)
         )
+    }
+}
+
+/// Schema versions.
+extension IndexStore {
+    private static var migrator: DatabaseMigrator {
+        var migrator = DatabaseMigrator()
+        migrator.registerMigration("v1") { db in
+            try db.create(table: "item") { table in
+                table.autoIncrementedPrimaryKey("id")
+                table.column("parent", .integer).references("item", onDelete: .cascade)
+                table.column("rootID", .integer).notNull()
+                table.column("name", .text).notNull()
+                table.column("kind", .integer).notNull()
+                table.column("fileID", .integer)
+                table.column("size", .integer).notNull()
+                table.column("allocated", .integer).notNull()
+                table.column("totalSize", .integer).notNull()
+                table.column("totalAllocated", .integer).notNull()
+                table.column("descendants", .integer).notNull().defaults(to: 0)
+                table.column("created", .double)
+                table.column("modified", .double)
+                table.column("hidden", .boolean).notNull()
+                table.column("depth", .integer).notNull()
+                table.uniqueKey(["parent", "name"])
+            }
+            try db.create(index: "item_root_depth", on: "item", columns: ["rootID", "depth"])
+            try db.create(table: "root") { table in
+                table.autoIncrementedPrimaryKey("id")
+                table.column("path", .text).notNull().unique()
+                table.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
+                table.column("exclusions", .text).notNull()
+                table.column("volumeUUID", .text)
+                table.column("lastEventID", .integer)
+                table.column("scannedAt", .double)
+            }
+        }
+        migrator.registerMigration("v2-search") { db in
+            // Name search: words split at separators, accents and case ignored, fast prefixes.
+            // ponytail: triggers slow full scans by a third (49k → 33k items/s); if it matters, skip
+            // them during full scans and run `INSERT INTO item_name(item_name) VALUES ('rebuild')` after.
+            try db.execute(sql: """
+            CREATE VIRTUAL TABLE item_name USING fts5(
+                name, content = 'item', content_rowid = 'id',
+                tokenize = "unicode61 remove_diacritics 2", prefix = '1 2 3'
+            );
+            CREATE TRIGGER item_name_insert AFTER INSERT ON item BEGIN
+                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
+            END;
+            CREATE TRIGGER item_name_delete AFTER DELETE ON item BEGIN
+                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
+            END;
+            CREATE TRIGGER item_name_update AFTER UPDATE OF name ON item BEGIN
+                INSERT INTO item_name(item_name, rowid, name) VALUES ('delete', old.id, old.name);
+                INSERT INTO item_name(rowid, name) VALUES (new.id, new.name);
+            END;
+            INSERT INTO item_name(item_name) VALUES ('rebuild');
+            """)
+        }
+        migrator.registerMigration("v3-tags") { db in
+            try db.create(table: "tag", options: [.withoutRowID]) { table in
+                table.column("itemID", .integer).notNull().references("item", onDelete: .cascade)
+                table.column("name", .text).notNull()
+                table.primaryKey(["itemID", "name"])
+            }
+            try db.create(index: "tag_name", on: "tag", columns: ["name"])
+            try db.alter(table: "root") { table in
+                table.add(column: "tagsReadAt", .double)
+            }
+        }
+        migrator.registerMigration("v4-content") { db in
+            // Document text, read in a background pass. `contentRead` turns false again when the
+            // item changes; the partial index finds what is left to read.
+            try db.execute(sql: """
+            ALTER TABLE item ADD COLUMN contentRead BOOLEAN NOT NULL DEFAULT 0;
+            CREATE INDEX item_content_unread ON item(id) WHERE contentRead = 0;
+            CREATE VIRTUAL TABLE item_content USING fts5(text, tokenize = "unicode61 remove_diacritics 2");
+            CREATE TRIGGER item_content_delete AFTER DELETE ON item BEGIN
+                DELETE FROM item_content WHERE rowid = old.id;
+            END;
+            CREATE TRIGGER item_content_stale AFTER UPDATE OF size, modified ON item WHEN new.contentRead BEGIN
+                UPDATE item SET contentRead = 0 WHERE id = new.id;
+            END;
+            """)
+        }
+        return migrator
     }
 }
