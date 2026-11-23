@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 
 /// A mounted volume: its mount point and stable UUID.
 public struct MountedVolume: Equatable, Sendable {
@@ -52,5 +53,32 @@ public extension IndexStore {
             changed.append(root.id)
         }
         return changed
+    }
+}
+
+public extension IndexStore {
+    /// The indexed items of the folder at `path`, as a directory listing: browsing a disk that
+    /// is not plugged in. Nil when the folder is not in the index.
+    func catalogEntries(ofFolder path: String) throws -> [DirectoryEntry]? {
+        guard let id = try itemID(forPath: path) else { return nil }
+        return try writer.read { db in
+            try Row.fetchAll(db, sql: """
+            SELECT name, kind, size, allocated, totalSize, created, modified, fileID, hidden FROM item WHERE parent = ?
+            """, arguments: [id]).map { row in
+                let kind: DirectoryEntry.Kind = switch Kind(rawValue: row["kind"]) {
+                case .directory: .directory
+                case .symlink: .symlink
+                case .file: .file
+                default: .other
+                }
+                let fileID: Int64? = row["fileID"]
+                return DirectoryEntry(
+                    name: row["name"], kind: kind, size: row["size"], allocatedSize: row["allocated"], itemCount: nil,
+                    created: Date(timeIntervalSince1970: row["created"] ?? 0),
+                    modified: Date(timeIntervalSince1970: row["modified"] ?? 0),
+                    fileID: UInt64(bitPattern: fileID ?? 0), isHidden: row["hidden"]
+                )
+            }
+        }
     }
 }

@@ -54,6 +54,21 @@ final class VolumeIdentityTests: XCTestCase {
         XCTAssertNil(try root(folder.id).volumeID, "plain folders have no volume ID")
     }
 
+    func testCatalogListsAFolderOfAnUnpluggedDisk() throws {
+        try temp.file("Disk/docs/a.txt", size: 12)
+        try temp.directory("Disk/docs/sub")
+        let disk = temp.url.appendingPathComponent("Disk")
+        let root = try store.addRoot(path: disk.path, exclusions: [])
+        try IndexScanner(store: store).scan(root)
+        try FileManager.default.removeItem(at: disk)
+
+        let entries = try XCTUnwrap(store.catalogEntries(ofFolder: disk.appendingPathComponent("docs").path))
+        XCTAssertEqual(entries.map(\.name).sorted(), ["a.txt", "sub"])
+        XCTAssertEqual(entries.first { $0.name == "a.txt" }?.size, 12)
+        XCTAssertEqual(entries.first { $0.name == "sub" }?.kind, .directory)
+        XCTAssertNil(try store.catalogEntries(ofFolder: disk.appendingPathComponent("nope").path))
+    }
+
     func testOfflineFlagAndDetailsAreSaved() throws {
         let root = try store.addRoot(path: temp.url.path, exclusions: [])
         try store.setOffline(root.id, true)
