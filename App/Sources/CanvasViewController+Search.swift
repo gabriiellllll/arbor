@@ -68,6 +68,7 @@ extension CanvasViewController {
         var folder = base
         for name in names {
             pendingSelections[folder.path] = [name]
+            revealedFolder = folder.path
             folder.appendPathComponent(name, isDirectory: true)
         }
         openRoot(base)

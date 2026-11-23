@@ -43,6 +43,8 @@ final class CanvasViewController: NSViewController {
     /// reopens its branches), and saved panel frames, by folder path.
     var pendingSelections: [String: [String]] = [:]
     var pendingFrames: [String: CGRect] = [:]
+    /// The folder of a search result being revealed: it becomes active once it selects it.
+    var revealedFolder: String?
     /// "Add to Favorites" was chosen in a panel.
     var onAddFavorites: (([URL]) -> Void)?
     /// A file operation to run, with its undo name.
@@ -231,8 +233,11 @@ final class CanvasViewController: NSViewController {
                 addPanel(added, url: url, frame: panel.frame)
             }
         }
-        // Reloads also report selection: only the active panel drives the inspector.
-        if id == activePanel {
+        if parent.url.path == revealedFolder {
+            revealedFolder = nil
+            activate(id, reveal: true)
+        } else if id == activePanel {
+            // Reloads also report selection: only the active panel drives the inspector.
             onInspectedItemChange?(items.count == 1 ? items.first : nil)
         }
         if isCompared(id) {
