@@ -90,6 +90,11 @@ final class SearchPanelTests: XCTestCase {
             canvas.panels.values.first { $0.title == "Small" }?.selectedItems.map(\.name) == ["tiny.txt"]
         }
         XCTAssertEqual(canvas.panels.values.first { $0.title == "Root" }?.selectedItems.map(\.name), ["Small"])
+        XCTAssertEqual(
+            canvas.activePanel.flatMap { canvas.panels[$0] }?.title,
+            "Small",
+            "the result's folder is active"
+        )
 
         let snapshot = canvas.snapshot()
         let restored = CanvasViewController(defaults: defaults)
