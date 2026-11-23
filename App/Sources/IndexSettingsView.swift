@@ -47,6 +47,8 @@ final class IndexSettingsModel {
         volumes = MountedVolumes.current().map { volume in
             let path = volume.url.path
             return VolumeRow(path: path, name: volume.name, rootID: roots.first { $0.path == path }?.id)
+        } + index.offlineDisks().map { root in
+            VolumeRow(path: root.path, name: String(localized: "\(root.diskName) (not plugged in)"), rootID: root.id)
         }
         status = index.status
     }
@@ -104,7 +106,7 @@ struct IndexSettingsView: View {
                     }
                 }
             }
-            Section("Indexed Volumes") {
+            Section {
                 ForEach(model.volumes) { volume in
                     Toggle(isOn: Binding(
                         get: { volume.rootID != nil },
@@ -113,6 +115,10 @@ struct IndexSettingsView: View {
                         Text(volume.name)
                     }
                 }
+            } header: {
+                Text("Indexed Volumes")
+            } footer: {
+                Text("Indexed disks stay in the catalog: browsable and searchable while unplugged.")
             }
         }
         .formStyle(.grouped)
