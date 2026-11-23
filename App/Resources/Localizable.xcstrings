@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ (internal)" : {
+
+    },
+    "%@ (not plugged in)" : {
+
+    },
     "%@ items, %@, scanned %@" : {
       "localizations" : {
         "en" : {
@@ -86,6 +92,9 @@
     "Add Exclusion…" : {
 
     },
+    "Add to Catalog" : {
+
+    },
     "Add to Favorites" : {
 
     },
@@ -153,6 +162,9 @@
     "Cancelled" : {
 
     },
+    "Capacity" : {
+
+    },
     "Clear" : {
 
     },
@@ -172,6 +184,9 @@
 
     },
     "Computer" : {
+
+    },
+    "Connection" : {
 
     },
     "Continue in Limited Mode" : {
@@ -218,6 +233,9 @@
     "Delete the workspace “%@”?" : {
 
     },
+    "Disk Details…" : {
+
+    },
     "Documents" : {
 
     },
@@ -246,6 +264,9 @@
 
     },
     "File Operations" : {
+
+    },
+    "File System" : {
 
     },
     "Files" : {
@@ -302,10 +323,16 @@
     "Indexed Volumes" : {
 
     },
+    "Indexed disks stay in the catalog: browsable and searchable while unplugged." : {
+
+    },
     "Indigo" : {
 
     },
     "Its canvas will be lost. Your files are not affected." : {
+
+    },
+    "Its folders will no longer be browsable or searchable while it is unplugged. Files on the disk are not affected." : {
 
     },
     "Keep Both" : {
@@ -331,6 +358,9 @@
     },
     "Minimize" : {
       "comment" : "Window menu item"
+    },
+    "Model" : {
+
     },
     "Modified" : {
 
@@ -383,6 +413,12 @@
 
     },
     "No operations" : {
+
+    },
+    "Not plugged in. Browse its catalog, or plug it in." : {
+
+    },
+    "Not plugged in. These details were saved when it was last connected." : {
 
     },
     "Not scanned yet" : {
@@ -466,10 +502,19 @@
     "Redo %@" : {
 
     },
+    "Remove" : {
+
+    },
     "Remove Exclusion" : {
 
     },
+    "Remove from Catalog…" : {
+
+    },
     "Remove from Favorites" : {
+
+    },
+    "Remove “%@” from the catalog?" : {
 
     },
     "Rename" : {
@@ -514,6 +559,9 @@
 
     },
     "Select All" : {
+
+    },
+    "Serial Number" : {
 
     },
     "Settings" : {
@@ -585,10 +633,19 @@
     "Undoing" : {
 
     },
+    "Unknown" : {
+
+    },
+    "Vendor" : {
+
+    },
     "Video" : {
 
     },
     "View" : {
+
+    },
+    "Volume UUID" : {
 
     },
     "Waiting" : {

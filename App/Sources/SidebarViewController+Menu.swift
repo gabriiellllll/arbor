@@ -37,14 +37,15 @@ extension SidebarViewController: NSMenuDelegate, NSTextFieldDelegate {
             color.submenu = colorMenu(selected: favorite.colorIndex)
             menu.addItem(color)
             add(String(localized: "Remove from Favorites"), #selector(removeFavorite), to: menu)
-        case .place:
+        case let .place(place):
             add(String(localized: "Add to Favorites"), #selector(addPlaceToFavorites), to: menu)
+            addCatalogItems(for: place, to: menu)
         case .header, .tag:
             break
         }
     }
 
-    private func add(_ title: String, _ action: Selector, to menu: NSMenu) {
+    func add(_ title: String, _ action: Selector, to menu: NSMenu) {
         menu.addItem(withTitle: title, action: action, keyEquivalent: "").target = self
     }
 

@@ -52,16 +52,19 @@ extension CanvasViewController {
 
     // ponytail: panels hide hidden items, so a chain through a hidden folder stops there.
     /// Opens the folders leading to `path` (canonical, as the index has it) down to the item
-    /// itself, selected: from the deepest open root holding it, else from the home folder or
-    /// the volume's root.
+    /// itself, selected: from the deepest open root holding it, else from the indexed disk or
+    /// folder holding it, the home folder or the volume's root.
     func reveal(path: String) {
         let url = URL(fileURLWithPath: path)
         let home = FileManager.default.homeDirectoryForCurrentUser
         let volume = (try? url.resourceValues(forKeys: [.volumeURLKey]).volume) ?? URL(fileURLWithPath: "/")
         let openRoots = tree.roots.filter { !isCompared($0) }.compactMap { panels[$0] }
             .map { (url: $0.url, canonical: $0.canonicalPath) }
+        // Cataloged disks and folders come before the home folder: an unplugged disk has no volume.
+        let indexed = (index?.roots() ?? []).filter { $0.path != "/" }.map(\.path)
+            .sorted { $0.count > $1.count }.map { URL(fileURLWithPath: $0, isDirectory: true) }
         let bases = openRoots.sorted { $0.canonical.count > $1.canonical.count }
-            + [home, volume].map { (url: $0, canonical: FolderWatcher.canonicalPath(of: $0)) }
+            + (indexed + [home, volume]).map { (url: $0, canonical: FolderWatcher.canonicalPath(of: $0)) }
         guard let (base, names) = bases.lazy.compactMap({ base in
             Self.names(of: path, below: base.canonical).map { (base.url, $0) }
         }).first else { return }
