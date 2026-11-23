@@ -126,6 +126,22 @@ extension IndexService {
         return (entries, root.diskName)
     }
 
+    /// Cataloged disks that are not plugged in.
+    func offlineDisks() -> [IndexRoot] {
+        roots().filter { $0.volumeID != nil && $0.path != "/" && !$0.isAvailable }
+    }
+
+    /// The catalog entry of the volume mounted at `path`, if it is cataloged.
+    func catalogRoot(at path: String) -> IndexRoot? {
+        roots().first { $0.path == FolderWatcher.canonicalPath(of: URL(fileURLWithPath: path)) }
+    }
+
+    /// Indexes a disk, keeping it in the catalog while it is unplugged.
+    func addToCatalog(_ url: URL) {
+        let path = FolderWatcher.canonicalPath(of: url)
+        addRoot(path: path, exclusions: path == "/" ? Self.defaultExclusions : [])
+    }
+
     /// Runs `query` off the main thread.
     func search(_ query: SearchQuery) async -> [SearchResult] {
         let store = store

@@ -5,6 +5,8 @@ import Foundation
 struct Place: Equatable {
     enum Kind {
         case computer, iCloudDrive, oneDrive, volume
+        /// A cataloged disk that is not plugged in.
+        case offlineDisk
     }
 
     let url: URL
@@ -12,9 +14,10 @@ struct Place: Equatable {
     let kind: Kind
 }
 
-/// The sidebar's Locations: this computer, cloud drives that exist, other mounted volumes.
+/// The sidebar's Locations: this computer, cloud drives that exist, other mounted volumes,
+/// then cataloged disks that are not plugged in.
 enum Locations {
-    static func all(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> [Place] {
+    static func all(home: URL = FileManager.default.homeDirectoryForCurrentUser, offline: [Place] = []) -> [Place] {
         let computer = Place(
             url: URL(fileURLWithPath: "/", isDirectory: true),
             name: Host.current().localizedName ?? String(localized: "Computer"),
@@ -23,7 +26,7 @@ enum Locations {
         let volumes = MountedVolumes.current().filter { !$0.isRoot }.map {
             Place(url: $0.url, name: $0.name, kind: .volume)
         }
-        return [computer] + cloud(home: home) + volumes
+        return [computer] + cloud(home: home) + volumes + offline
     }
 
     /// iCloud Drive and OneDrive folders, when present in `home`.

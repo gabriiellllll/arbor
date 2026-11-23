@@ -41,6 +41,11 @@ final class SidebarViewController: NSViewController {
     }
 
     private var tags: [String] = []
+    private var offlineDisks: [String] = []
+    /// The index: cataloged disks, including those not plugged in.
+    weak var index: IndexService? {
+        didSet { reload() }
+    }
 
     let database: AppDatabase
     let outlineView = SidebarOutlineView()
@@ -92,10 +97,14 @@ final class SidebarViewController: NSViewController {
         let favorites = (try? database.favorites()) ?? []
         currentWorkspaceID = try? database.currentWorkspaceID()
         tags = tagNames?() ?? []
+        let offline = index?.offlineDisks() ?? []
+        offlineDisks = offline.map(\.path)
         sections = [
             SidebarNode(.header(.workspaces), children: workspaces.map { SidebarNode(.workspace($0)) }),
             SidebarNode(.header(.favorites), children: favorites.map { SidebarNode(.favorite($0)) }),
-            SidebarNode(.header(.locations), children: Locations.all().map { SidebarNode(.place($0)) }),
+            SidebarNode(.header(.locations), children: Locations.all(offline: offline.map {
+                Place(url: URL(fileURLWithPath: $0.path, isDirectory: true), name: $0.diskName, kind: .offlineDisk)
+            }).map { SidebarNode(.place($0)) }),
         ]
         if !tags.isEmpty {
             sections.append(SidebarNode(.header(.tags), children: tags.map { SidebarNode(.tag($0)) }))
@@ -104,9 +113,9 @@ final class SidebarViewController: NSViewController {
         outlineView.expandItem(nil, expandChildren: true)
     }
 
-    /// The index changed: rebuilds the outline only if its tags did.
-    func refreshTags() {
-        if (tagNames?() ?? []) != tags {
+    /// The index changed: rebuilds the outline only if its tags or unplugged disks did.
+    func indexChanged() {
+        if (tagNames?() ?? []) != tags || (index?.offlineDisks() ?? []).map(\.path) != offlineDisks {
             reload()
         }
     }
@@ -198,6 +207,15 @@ extension SidebarViewController: NSOutlineViewDataSource, NSOutlineViewDelegate 
                 icon: NSWorkspace.shared.icon(forFile: favorite.path),
                 dot: BranchPalette.color(at: favorite.colorIndex)
             )
+        case let .place(place) where place.kind == .offlineDisk:
+            let cell = SidebarCell.row(
+                title: place.name,
+                icon: NSImage(systemSymbolName: "externaldrive.badge.xmark", accessibilityDescription: nil),
+                dot: nil
+            )
+            cell.textField?.textColor = .secondaryLabelColor
+            cell.toolTip = String(localized: "Not plugged in. Browse its catalog, or plug it in.")
+            return cell
         case let .place(place):
             return SidebarCell.row(title: place.name, icon: NSWorkspace.shared.icon(forFile: place.url.path), dot: nil)
         case let .tag(name):

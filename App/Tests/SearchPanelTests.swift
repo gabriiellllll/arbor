@@ -140,10 +140,10 @@ final class SidebarTagsTests: XCTestCase {
             return nil
         }, tags)
 
-        sidebar.refreshTags()
+        sidebar.indexChanged()
         XCTAssertTrue(sidebar.section(.tags) === section, "unchanged tags keep the outline")
         tags = ["Red"]
-        sidebar.refreshTags()
+        sidebar.indexChanged()
         XCTAssertEqual(sidebar.section(.tags)?.children.count, 1)
     }
 }
