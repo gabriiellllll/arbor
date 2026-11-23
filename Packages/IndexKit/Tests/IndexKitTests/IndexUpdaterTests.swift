@@ -108,6 +108,19 @@ final class IndexUpdaterTests: XCTestCase {
         try assertMatchesFreshScan()
     }
 
+    func testRefreshAllCatchesUpEverywhereAndKeepsUnchangedItems() throws {
+        let unchanged = try store.itemID(forPath: path("docs/b.txt"))
+        try temp.file("docs/deep/c.txt", size: 31)
+        try temp.file("docs/deep/more/d.txt", size: 4)
+        try FileManager.default.removeItem(atPath: path("a.txt"))
+        try updater.refreshAll(root)
+        XCTAssertEqual(try total("docs/deep"), 35)
+        XCTAssertEqual(try total(""), 55)
+        XCTAssertNil(try store.itemID(forPath: path("a.txt")))
+        XCTAssertEqual(try store.itemID(forPath: path("docs/b.txt")), unchanged, "unchanged items keep their row")
+        try assertMatchesFreshScan()
+    }
+
     func testChangesOutsideTheIndexAreIgnored() throws {
         try temp.file("skip/big.bin", size: 1000)
         XCTAssertEqual(try changed("skip"), [])
