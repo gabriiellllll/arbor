@@ -76,12 +76,21 @@ footnotes or speaker notes); RTF, Pages / Numbers / Keynote and legacy .doc / .x
 read.
 
 ## Phase 6 — External disks and shares
-- [ ] Stable volume identity (volume UUID, DiskArbitration)
-- [ ] Offline catalog: browse and search unplugged disks, "plug in disk X" hint
-- [ ] Disk details: vendor, model, serial, connection type, capacity, file system (IOKit)
-- [ ] User chooses which disks join the catalog
+- [x] Stable volume identity (volume UUID, DiskArbitration)
+- [x] Offline catalog: browse and search unplugged disks, "plug in disk X" hint
+- [x] Disk details: vendor, model, serial, connection type, capacity, file system (IOKit)
+- [x] User chooses which disks join the catalog
 - [ ] Network shares (SMB / AFP / NFS): remembered, one-click reconnect (NetFS), Keychain credentials
 - [ ] Sidebar Shared section: mounted network shares and servers seen on the network
+
+Phase 6a notes: the catalog is the index. A disk joins it from its sidebar menu ("Add to
+Catalog") or Settings › Index; nothing is added automatically. An unplugged disk keeps its
+items: it stays in the sidebar (greyed), its folders open as greyed, read-only panels with a
+"Plug in X" banner, and search finds its files. A disk is recognised by its volume UUID, so
+it is found again under another mount path. A disk plugged back in is re-read in full,
+keeping unchanged items (and their document text), because it may have changed on another
+Mac. Disk details come from Disk Arbitration and the I/O Registry and are saved, so an
+unplugged disk shows them too. Network shares (6b) are next.
 
 ## Phase 7 — Batch rename and merge
 - [ ] Rename engine: find/replace (regex, case), prefix/suffix, numbering, dates (created, modified, EXIF), case change (tested)
