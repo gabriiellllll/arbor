@@ -1,3 +1,4 @@
+import DiskArbitration
 @testable import DiskKit
 import XCTest
 
@@ -8,8 +9,18 @@ final class DiskDetailsTests: XCTestCase {
         XCTAssertNotNil(details.volumeUUID)
         XCTAssertGreaterThan(details.capacity ?? 0, 0)
         XCTAssertNotNil(details.fileSystem)
-        XCTAssertNotNil(details.model, "Disk Arbitration describes the device")
-        XCTAssertNotEqual(details.vendor, "", "empty strings become nil")
+        // Device strings depend on the hardware (virtual machines have none): they must match
+        // what Disk Arbitration says, trimmed, with empty strings as nil.
+        let session = try XCTUnwrap(DASessionCreate(nil))
+        let disk = try XCTUnwrap(DADiskCreateFromVolumePath(nil, session, URL(fileURLWithPath: "/") as CFURL))
+        let description = try XCTUnwrap(DADiskCopyDescription(disk) as? [String: Any])
+        let expected = { (key: CFString) -> String? in
+            let value = (description[key as String] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return value?.isEmpty == false ? value : nil
+        }
+        XCTAssertEqual(details.vendor, expected(kDADiskDescriptionDeviceVendorKey))
+        XCTAssertEqual(details.model, expected(kDADiskDescriptionDeviceModelKey))
+        XCTAssertEqual(details.connection, expected(kDADiskDescriptionDeviceProtocolKey))
     }
 
     func testNothingMountedThere() {
