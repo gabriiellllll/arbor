@@ -173,6 +173,7 @@ final class CanvasViewController: NSViewController {
         tree.setFrame(frame, for: id)
         let panel = FolderPanelController(url: url, frame: frame)
         panel.sizeLookup = { [weak self] path in self?.sizeLookup?(path) ?? [:] }
+        panel.catalogLookup = { [weak self] path in self?.index?.catalog(ofFolder: path) }
         panel.showsSizeBars = showsSizeBars
         panel.onAddFavorites = { [weak self] urls in self?.onAddFavorites?(urls) }
         panel.tint = color(of: id)
@@ -293,16 +294,6 @@ final class CanvasViewController: NSViewController {
         canvasView.branchesView.setBranches(branches)
     }
 
-    /// The index changed: panels show the new folder sizes.
-    func indexChanged() {
-        for panel in panels.values {
-            panel.refreshSizes()
-        }
-        for panel in searchPanels.values {
-            panel.refresh()
-        }
-    }
-
     // MARK: - Live updates
 
     private func updateWatchedFolders() {
@@ -318,6 +309,23 @@ final class CanvasViewController: NSViewController {
             if changed {
                 panel.reload()
             }
+        }
+    }
+}
+
+extension CanvasViewController {
+    /// The index changed: panels show the new folder sizes.
+    func indexChanged() {
+        for panel in panels.values {
+            // A disk plugged back in: its panels read it again.
+            if panel.offlineDisk != nil {
+                panel.reload()
+            } else {
+                panel.refreshSizes()
+            }
+        }
+        for panel in searchPanels.values {
+            panel.refresh()
         }
     }
 }

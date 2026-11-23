@@ -60,7 +60,7 @@ extension FolderPanelController: NSTextFieldDelegate {
         }
         let urls = droppedURLs(info)
         let destination = dropDestination(row: row, onItem: onFolder)
-        return !urls.isEmpty && isUsefulDrop(urls, into: destination) ? dropOperation(info) : []
+        return offlineDisk == nil && !urls.isEmpty && isUsefulDrop(urls, into: destination) ? dropOperation(info) : []
     }
 
     func tableView(
@@ -81,7 +81,10 @@ extension FolderPanelController: NSTextFieldDelegate {
         let row = indexPath.pointee.item
         let onFolder = dropOperation.pointee == .on && items.indices.contains(row) && items[row].isFolder
         let urls = droppedURLs(info)
-        return !urls.isEmpty && isUsefulDrop(urls, into: dropDestination(row: row, onItem: onFolder))
+        return offlineDisk == nil && !urls.isEmpty && isUsefulDrop(
+            urls,
+            into: dropDestination(row: row, onItem: onFolder)
+        )
             ? self.dropOperation(info) : []
     }
 
@@ -103,7 +106,7 @@ extension FolderPanelController: NSTextFieldDelegate {
 
     /// Edits the name of the single selected item (list mode).
     func beginRename() {
-        guard mode == .list, selectedIndexes.count == 1, let row = selectedIndexes.first,
+        guard mode == .list, offlineDisk == nil, selectedIndexes.count == 1, let row = selectedIndexes.first,
               let cell = tableView.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
               let field = cell.textField else { return }
         renamingItem = items[row]

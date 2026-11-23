@@ -52,6 +52,11 @@ final class FolderPanelController: NSObject {
     var sizeLookup: ((String) -> [String: Int64])?
     /// Total sizes of the subfolders, from the index.
     var folderSizes: [String: Int64] = [:]
+    /// The folder's items from the catalog, for a disk that is not plugged in, and the disk's name.
+    var catalogLookup: ((String) -> (entries: [DirectoryEntry], disk: String)?)?
+    /// Set while the folder is shown from the catalog: the disk to plug in. The panel is then
+    /// greyed out and read-only.
+    var offlineDisk: String?
     /// Draws a bar behind each row, proportional to the item's size.
     var showsSizeBars = false {
         didSet {
@@ -76,6 +81,7 @@ final class FolderPanelController: NSObject {
     let collectionView = NSCollectionView()
     private let collectionScroll = NSScrollView()
     let messageLabel = NSTextField(wrappingLabelWithString: "")
+    let offlineBanner = NSTextField(labelWithString: "")
 
     init(url: URL, frame: CGRect) {
         self.url = url
@@ -230,6 +236,15 @@ final class FolderPanelController: NSObject {
         )
     }
 
+    /// Greys the items out and shows which disk to plug in, while shown from the catalog.
+    func updateOfflineLook() {
+        let offline = offlineDisk != nil
+        tableScroll.alphaValue = offline ? 0.5 : 1
+        collectionScroll.alphaValue = offline ? 0.5 : 1
+        offlineBanner.isHidden = !offline
+        offlineBanner.stringValue = offlineDisk.map { String(localized: "Plug in “\($0)” to open this folder.") } ?? ""
+    }
+
     private func setUpMessage() {
         messageLabel.alignment = .center
         messageLabel.textColor = .secondaryLabelColor
@@ -240,6 +255,20 @@ final class FolderPanelController: NSObject {
             messageLabel.centerYAnchor.constraint(equalTo: panelView.contentView.centerYAnchor),
             messageLabel.leadingAnchor.constraint(equalTo: panelView.contentView.leadingAnchor, constant: 20),
             messageLabel.trailingAnchor.constraint(equalTo: panelView.contentView.trailingAnchor, constant: -20),
+        ])
+        offlineBanner.alignment = .center
+        offlineBanner.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+        offlineBanner.drawsBackground = true
+        offlineBanner.backgroundColor = .controlBackgroundColor
+        offlineBanner.isHidden = true
+        offlineBanner.setAccessibilityIdentifier("offlineBanner")
+        offlineBanner.translatesAutoresizingMaskIntoConstraints = false
+        panelView.contentView.addSubview(offlineBanner)
+        NSLayoutConstraint.activate([
+            offlineBanner.bottomAnchor.constraint(equalTo: panelView.contentView.bottomAnchor),
+            offlineBanner.leadingAnchor.constraint(equalTo: panelView.contentView.leadingAnchor),
+            offlineBanner.trailingAnchor.constraint(equalTo: panelView.contentView.trailingAnchor),
+            offlineBanner.heightAnchor.constraint(equalToConstant: 24),
         ])
     }
 }
