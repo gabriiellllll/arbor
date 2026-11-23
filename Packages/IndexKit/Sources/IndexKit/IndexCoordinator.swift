@@ -1,7 +1,8 @@
 import Foundation
 
 /// Runs the index: scans roots that need it, then follows FSEvents (catching up from the last
-/// saved event after a relaunch) and keeps the index current. Work runs on one background queue.
+/// saved event after a relaunch) and keeps the index current. Work runs on one background queue;
+/// reading document text runs on a second one, at the lowest priority.
 public final class IndexCoordinator: @unchecked Sendable {
     public enum Status: Equatable, Sendable {
         case idle
@@ -17,6 +18,9 @@ public final class IndexCoordinator: @unchecked Sendable {
     public let store: IndexStore
     private let queue = DispatchQueue(label: "app.arbor.IndexCoordinator", qos: .utility)
     private let control = ScanControl()
+    private let contentQueue = DispatchQueue(label: "app.arbor.IndexCoordinator.content", qos: .background)
+    private let contentLock = NSLock()
+    private var contentPassQueued = false
     private lazy var watcher = FolderWatcher(latency: 1) { [weak self] changes in
         guard let self else { return }
         queue.async { self.apply(changes) }
@@ -85,6 +89,22 @@ public final class IndexCoordinator: @unchecked Sendable {
         control.cancel()
         watcher.watch([])
         queue.sync {}
+        contentQueue.sync {}
+    }
+
+    /// Reads the text of new and changed documents, unless a pass is already waiting to start.
+    private func readContents() {
+        let queued = contentLock.withLock {
+            defer { contentPassQueued = true }
+            return contentPassQueued
+        }
+        guard !queued else { return }
+        contentQueue.async { [self] in
+            contentLock.withLock { contentPassQueued = false }
+            if let read = try? store.readContents(control: control), read > 0 {
+                onChange?([])
+            }
+        }
     }
 
     /// Scans the roots that need it, one volume per thread, then watches all roots.
@@ -99,6 +119,7 @@ public final class IndexCoordinator: @unchecked Sendable {
             }
         }
         startWatching()
+        readContents()
     }
 
     /// A full scan is needed when never scanned, or when the volume's event history changed
@@ -121,6 +142,7 @@ public final class IndexCoordinator: @unchecked Sendable {
         try IndexScanner(store: store).readTags(root, control: control)
         onStatus?(.idle)
         onChange?([path])
+        readContents()
     }
 
     private func startWatching() {
@@ -141,6 +163,7 @@ public final class IndexCoordinator: @unchecked Sendable {
         }
         if !affected.isEmpty {
             onChange?(affected)
+            readContents()
         }
     }
 }
