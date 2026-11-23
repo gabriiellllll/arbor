@@ -46,7 +46,7 @@ docs/                  Maintainer docs (signing setup)
 | CanvasKit | Viewport math (pan/zoom), layouts (tree right/down, star, manual), overlap removal, branch Bézier geometry, Codable canvas model, AppKit canvas/panel host/branch layer views. Knows nothing about files. | — |
 | IndexKit | `getattrlistbulk` directory reader and scanner, GRDB index store, aggregated folder sizes, FSEvents watcher with persisted event IDs, FTS5 name + content search, text extraction. | GRDB |
 | FileOpsKit | File operation queue (progress, pause, cancel, conflicts), undo/redo, batch rename engine, folder merge, Finder tags. | — |
-| DiskKit | Volume identity (UUID, DiskArbitration), IOKit disk details, offline catalog, network shares (NetFS) with Keychain credentials. | IndexKit (from phase 6) |
+| DiskKit | Disk details (DiskArbitration, IOKit), mounted volumes, network shares (NetFS) with Keychain credentials. Volume identity and the offline catalog live in IndexKit (the catalog is the index). | — |
 | PreviewKit | QuickLookThumbnailing with disk cache, batch image conversion (ImageIO). | — |
 | BackupKit | Content-addressed chunk store (SHA-256), versions/restore, AES-GCM, scrypt, recovery key, retention. | — |
 
