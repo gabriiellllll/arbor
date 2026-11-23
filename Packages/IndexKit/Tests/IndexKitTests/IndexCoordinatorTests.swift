@@ -61,6 +61,25 @@ final class IndexCoordinatorTests: XCTestCase {
         coordinator.stop()
     }
 
+    func testDocumentTextIsReadAfterTheScanAndAfterChanges() throws {
+        try Data("Quarterly zanzibar report".utf8).write(to: temp.url.appendingPathComponent("data/a.txt"))
+        let store = try IndexStore.open(at: databaseURL)
+        _ = try store.addRoot(path: temp.url.path, exclusions: [])
+        let names = { @Sendable (text: String) in (try? store.search(SearchQuery(text: text)))?.map(\.name) ?? [] }
+        let coordinator = run(store) { names("zanzibar") == ["a.txt"] }
+
+        let followed = expectation(description: "new document read")
+        followed.assertForOverFulfill = false
+        coordinator.onChange = { _ in
+            if names("madagascar") == ["b.md"] {
+                followed.fulfill()
+            }
+        }
+        try Data("Trip to Madagascar".utf8).write(to: temp.url.appendingPathComponent("data/b.md"))
+        wait(for: [followed], timeout: 15)
+        coordinator.stop()
+    }
+
     func testRelaunchCatchesUpWithChangesMadeWhileClosed() throws {
         let path = dataPath
         do {
