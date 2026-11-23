@@ -19,6 +19,14 @@ extension FolderPanelController {
 
     func apply(_ result: Result<[DirectoryEntry], any Error>) {
         let selectedNames = Set(selectedItems.map(\.name))
+        var result = result
+        offlineDisk = nil
+        if case .failure = result, let catalog = catalogLookup?(canonicalPath) {
+            // A disk that is not plugged in: its folder comes from the catalog.
+            offlineDisk = catalog.disk
+            result = .success(catalog.entries)
+        }
+        updateOfflineLook()
         switch result {
         case let .success(entries):
             folderSizes = sizeLookup?(canonicalPath) ?? [:]

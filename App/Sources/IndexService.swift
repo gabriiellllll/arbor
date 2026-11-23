@@ -1,4 +1,5 @@
-import Foundation
+import AppKit
+import DiskKit
 import IndexKit
 
 /// The app's file index: opens it, indexes the startup volume on first launch, keeps it
@@ -17,6 +18,7 @@ final class IndexService {
     var onChange: ((Set<String>) -> Void)?
     private(set) var status: IndexCoordinator.Status = .idle
     var onStatus: ((IndexCoordinator.Status) -> Void)?
+    private var volumeObservers: [any NSObjectProtocol] = []
 
     init(store: IndexStore) {
         self.store = store
@@ -53,10 +55,36 @@ final class IndexService {
 
     func start() {
         coordinator.start()
+        saveDiskDetails()
+        let center = NSWorkspace.shared.notificationCenter
+        let names = [
+            NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+            NSWorkspace.didRenameVolumeNotification,
+        ]
+        volumeObservers = names.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.coordinator.volumesChanged()
+                    self?.saveDiskDetails()
+                }
+            }
+        }
     }
 
     func stop() {
+        volumeObservers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
+        volumeObservers = []
         coordinator.stop()
+    }
+
+    /// Keeps the details of each indexed disk that is plugged in, to show them while it is not.
+    private func saveDiskDetails() {
+        for root in roots() {
+            let url = URL(fileURLWithPath: root.path)
+            guard (try? url.resourceValues(forKeys: [.volumeURLKey]))?.volume?.standardizedFileURL.path == root.path,
+                  let details = DiskDetails.of(volume: url), details != root.diskDetails else { continue }
+            try? store.setDetails(root.id, JSONEncoder().encode(details))
+        }
     }
 
     func roots() -> [IndexRoot] {
@@ -90,6 +118,14 @@ final class IndexService {
 }
 
 extension IndexService {
+    /// The items of a folder on a disk that is not plugged in, from the catalog, and the
+    /// disk's name. Nil when the folder's disk is there (or the folder is not indexed).
+    func catalog(ofFolder path: String) -> (entries: [DirectoryEntry], disk: String)? {
+        guard let root = try? store.root(containing: path), !root.isAvailable,
+              let entries = try? store.catalogEntries(ofFolder: path) else { return nil }
+        return (entries, root.diskName)
+    }
+
     /// Runs `query` off the main thread.
     func search(_ query: SearchQuery) async -> [SearchResult] {
         let store = store
@@ -99,5 +135,17 @@ extension IndexService {
     /// Finder tags in the index, most used first.
     func tagNames() -> [String] {
         ((try? store.tagCounts()) ?? []).map(\.name)
+    }
+}
+
+extension IndexRoot {
+    /// The disk's saved details, if any.
+    var diskDetails: DiskDetails? {
+        details.flatMap { try? JSONDecoder().decode(DiskDetails.self, from: $0) }
+    }
+
+    /// The disk's name as last seen, else the root folder's name.
+    var diskName: String {
+        diskDetails?.name ?? FileManager.default.displayName(atPath: path)
     }
 }
