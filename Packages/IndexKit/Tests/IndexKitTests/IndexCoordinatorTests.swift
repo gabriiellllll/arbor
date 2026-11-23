@@ -80,6 +80,27 @@ final class IndexCoordinatorTests: XCTestCase {
         coordinator.stop()
     }
 
+    func testAnUnpluggedRootIsKeptThenRefreshedWhenBack() throws {
+        let disk = try temp.directory("disk")
+        try temp.file("disk/a.txt", size: 10)
+        let store = try IndexStore.open(at: databaseURL)
+        _ = try store.addRoot(path: disk.path, exclusions: [])
+        run(store) { Self.total(store, disk.path) == 10 }.stop()
+
+        let away = temp.url.appendingPathComponent("away")
+        try FileManager.default.moveItem(at: disk, to: away)
+        let isOffline = { @Sendable in (try? store.roots().first?.isOffline) == true }
+        let coordinator = run(store) { isOffline() }
+        XCTAssertEqual(Self.total(store, disk.path), 10, "kept as a catalog, not rescanned away")
+
+        try temp.file("away/b.txt", size: 5)
+        try FileManager.default.moveItem(at: away, to: disk)
+        waitForChange(coordinator, after: { coordinator.volumesChanged() }, until: {
+            Self.total(store, disk.path) == 15 && !isOffline()
+        })
+        coordinator.stop()
+    }
+
     func testRelaunchCatchesUpWithChangesMadeWhileClosed() throws {
         let path = dataPath
         do {
