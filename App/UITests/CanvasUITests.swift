@@ -253,4 +253,21 @@ final class CanvasUITests: XCTestCase {
         XCTAssertTrue(app.tables["searchResults"].staticTexts["notes.txt"].waitForExistence(timeout: 5))
         attachScreenshot("tag search")
     }
+
+    @MainActor
+    func testUnpluggedDiskOpensFromTheCatalogWithItsDetails() {
+        let disk = app.outlines["sidebar"].staticTexts["Archive"]
+        XCTAssertTrue(disk.waitForExistence(timeout: 10), "the unplugged disk is listed")
+        disk.click()
+        XCTAssertTrue(app.groups["panel.Archive"].waitForExistence(timeout: 5))
+        XCTAssertTrue(row("Photos", in: "Archive").waitForExistence(timeout: 5), "browsed from the catalog")
+        XCTAssertTrue(app.groups["panel.Archive"].staticTexts["offlineBanner"].exists)
+        attachScreenshot("unplugged disk from the catalog")
+
+        disk.rightClick()
+        app.menuItems["Disk Details…"].click()
+        XCTAssertTrue(app.staticTexts["UI Test Disk"].waitForExistence(timeout: 5))
+        attachScreenshot("disk details")
+        app.buttons["Done"].click()
+    }
 }
