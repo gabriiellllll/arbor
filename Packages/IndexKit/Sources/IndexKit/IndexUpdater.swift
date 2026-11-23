@@ -31,6 +31,19 @@ public struct IndexUpdater: Sendable {
         return affected
     }
 
+    /// Re-reads every indexed folder of `root`, keeping the items that did not change (and
+    /// their text): for a disk plugged back in, which may have changed elsewhere.
+    public func refreshAll(_ root: IndexRoot, control: ScanControl = ScanControl()) throws {
+        var pending = [IndexScanner.Folder(id: root.itemID, path: root.path, depth: 0)]
+        while let folder = pending.popLast() {
+            if control.isCancelled {
+                throw CancellationError()
+            }
+            pending += try refresh(folder, root: root, propagate: false)
+        }
+        try store.aggregate(subtreeOf: root.itemID)
+    }
+
     private static func isExcluded(_ path: String, _ root: IndexRoot) -> Bool {
         root.exclusions.contains { path == $0 || path.hasPrefix($0 + "/") }
     }
@@ -65,46 +78,16 @@ public struct IndexUpdater: Sendable {
     }
 
     /// Re-reads one folder: adds, updates and removes its direct items; new subfolders are
-    /// scanned in full.
-    private func refresh(_ folder: IndexScanner.Folder, root: IndexRoot) throws {
+    /// scanned in full. Returns the subfolders that were already indexed.
+    @discardableResult
+    private func refresh(
+        _ folder: IndexScanner.Folder, root: IndexRoot, propagate: Bool = true
+    ) throws -> [IndexScanner.Folder] {
         let entries = try DirectoryReader.entries(at: URL(fileURLWithPath: folder.path)).filter {
             !Self.isExcluded((folder.path as NSString).appendingPathComponent($0.name), root)
         }
-        var newFolders: [IndexScanner.Folder] = []
-        try store.writer.write { db in
-            var existing: [String: Row] = [:]
-            for row in try Row.fetchAll(
-                db, sql: "SELECT id, name, kind, size, modified FROM item WHERE parent = ?", arguments: [folder.id]
-            ) {
-                existing[row["name"]] = row
-            }
-            var added: [DirectoryEntry] = []
-            for entry in entries {
-                let kind = IndexStore.Kind(entry.kind).rawValue
-                guard let row = existing.removeValue(forKey: entry.name) else {
-                    added.append(entry)
-                    continue
-                }
-                if row["kind"] != kind {
-                    try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [row["id"]])
-                    added.append(entry)
-                } else if kind != IndexStore.Kind.directory.rawValue,
-                          row["size"] != entry.size || row["modified"] != entry.modified.timeIntervalSince1970
-                {
-                    try db.execute(sql: """
-                    UPDATE item SET size = ?1, allocated = ?2, totalSize = ?1, totalAllocated = ?2, modified = ?3
-                    WHERE id = ?4
-                    """, arguments: [entry.size, entry.allocatedSize, entry.modified.timeIntervalSince1970, row["id"]])
-                }
-            }
-            for row in existing.values {
-                try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [row["id"]])
-            }
-            let ids = try IndexStore.insert(added, parent: folder.id, rootID: root.id, depth: folder.depth + 1, db)
-            for (entry, id) in zip(added, ids) where entry.kind == .directory && !entry.isMountPoint {
-                let path = (folder.path as NSString).appendingPathComponent(entry.name)
-                newFolders.append(IndexScanner.Folder(id: id, path: path, depth: folder.depth + 1))
-            }
+        let (newFolders, keptFolders) = try store.writer.write { db in
+            try Self.update(folder, to: entries, root: root, db)
         }
         let scanner = IndexScanner(store: store)
         for newFolder in newFolders {
@@ -114,6 +97,56 @@ public struct IndexUpdater: Sendable {
         }
         // Tag changes only touch an extended attribute (dates don't change): re-read them all.
         try store.readTags(ofChildrenOf: folder)
-        try store.propagateUp(from: folder.id)
+        if propagate {
+            try store.propagateUp(from: folder.id)
+        }
+        return keptFolders
+    }
+
+    /// Updates the index rows of `folder`'s direct items to match `entries`. Returns the new
+    /// subfolders (to scan) and those already indexed.
+    private static func update(
+        _ folder: IndexScanner.Folder, to entries: [DirectoryEntry], root: IndexRoot, _ db: Database
+    ) throws -> (new: [IndexScanner.Folder], kept: [IndexScanner.Folder]) {
+        var newFolders: [IndexScanner.Folder] = []
+        var keptFolders: [IndexScanner.Folder] = []
+        var existing: [String: Row] = [:]
+        for row in try Row.fetchAll(
+            db, sql: "SELECT id, name, kind, size, modified FROM item WHERE parent = ?", arguments: [folder.id]
+        ) {
+            existing[row["name"]] = row
+        }
+        var added: [DirectoryEntry] = []
+        for entry in entries {
+            let kind = IndexStore.Kind(entry.kind).rawValue
+            guard let row = existing.removeValue(forKey: entry.name) else {
+                added.append(entry)
+                continue
+            }
+            if kind == IndexStore.Kind.directory.rawValue, row["kind"] == kind, !entry.isMountPoint {
+                let path = (folder.path as NSString).appendingPathComponent(entry.name)
+                keptFolders.append(IndexScanner.Folder(id: row["id"], path: path, depth: folder.depth + 1))
+            }
+            if row["kind"] != kind {
+                try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [row["id"]])
+                added.append(entry)
+            } else if kind != IndexStore.Kind.directory.rawValue,
+                      row["size"] != entry.size || row["modified"] != entry.modified.timeIntervalSince1970
+            {
+                try db.execute(sql: """
+                UPDATE item SET size = ?1, allocated = ?2, totalSize = ?1, totalAllocated = ?2, modified = ?3
+                WHERE id = ?4
+                """, arguments: [entry.size, entry.allocatedSize, entry.modified.timeIntervalSince1970, row["id"]])
+            }
+        }
+        for row in existing.values {
+            try db.execute(sql: "DELETE FROM item WHERE id = ?", arguments: [row["id"]])
+        }
+        let ids = try IndexStore.insert(added, parent: folder.id, rootID: root.id, depth: folder.depth + 1, db)
+        for (entry, id) in zip(added, ids) where entry.kind == .directory && !entry.isMountPoint {
+            let path = (folder.path as NSString).appendingPathComponent(entry.name)
+            newFolders.append(IndexScanner.Folder(id: id, path: path, depth: folder.depth + 1))
+        }
+        return (newFolders, keptFolders)
     }
 }
