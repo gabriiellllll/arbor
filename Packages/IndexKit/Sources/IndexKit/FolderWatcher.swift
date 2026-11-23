@@ -72,9 +72,14 @@ public final class FolderWatcher: @unchecked Sendable {
 
     /// The path FSEvents reports for `url`: symlinks resolved, including `/var` → `/private/var`
     /// (which `URL.resolvingSymlinksInPath()` deliberately does not do). Compare reported
-    /// changes against this.
+    /// changes against this. A missing item (an unplugged disk's folder) resolves through its
+    /// closest existing parent.
     public static func canonicalPath(of url: URL) -> String {
-        guard let resolved = realpath(url.path, nil) else { return normalized(url.path) }
+        guard let resolved = realpath(url.path, nil) else {
+            let parent = url.deletingLastPathComponent()
+            guard url.path != "/", parent.path != url.path else { return normalized(url.path) }
+            return (canonicalPath(of: parent) as NSString).appendingPathComponent(url.lastPathComponent)
+        }
         defer { free(resolved) }
         return String(cString: resolved)
     }
