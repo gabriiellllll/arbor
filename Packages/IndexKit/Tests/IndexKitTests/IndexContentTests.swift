@@ -1,7 +1,7 @@
 @testable import IndexKit
 import XCTest
 
-/// Root/{notes/meeting.md, code/main.swift, photo.jpg}
+/// Root/{notes/meeting.md, code/main.swift, photo.jpg, answers.txt (empty)}
 final class IndexContentTests: XCTestCase {
     private var temp: TemporaryDirectory!
     private var store: IndexStore!
@@ -12,6 +12,7 @@ final class IndexContentTests: XCTestCase {
         try write("Budget meeting in Zanzibar", to: "notes/meeting.md")
         try write("let answer = 42", to: "code/main.swift")
         try write("Zanzibar", to: "photo.jpg")
+        try temp.file("answers.txt")
         store = try IndexStore.inMemory()
         root = try store.addRoot(path: temp.url.path, exclusions: [])
         try IndexScanner(store: store).scan(root)
@@ -52,6 +53,19 @@ final class IndexContentTests: XCTestCase {
         ])
         XCTAssertEqual(try store.readContents(), 1)
         XCTAssertEqual(try contents(), ["Budget meeting moved to Madagascar"])
+    }
+
+    func testSearchFindsWordsInDocumentsAfterNameMatches() throws {
+        try store.readContents()
+        let found = try store.search(SearchQuery(text: "zanz"))
+        XCTAssertEqual(found.map(\.name), ["meeting.md"], "images are not read")
+        XCTAssertEqual(found.first?.excerpt, "Budget meeting in Zanzibar")
+        XCTAssertEqual(try store.search(SearchQuery(text: "answer")).map(\.name), ["answers.txt", "main.swift"])
+        XCTAssertNil(try store.search(SearchQuery(text: "answer")).first?.excerpt)
+        XCTAssertEqual(
+            try store.search(SearchQuery(text: "zanzibar", category: .code)).map(\.name), [],
+            "filters apply to text matches"
+        )
     }
 
     func testCancellationStopsThePass() throws {
