@@ -96,12 +96,15 @@ final class SearchPanelController: NSObject {
         }
     }
 
-    private func setUpViews() {
+    private func addColumns() {
         let titles = [
             "name": String(localized: "Name"), "folder": String(localized: "Folder"),
-            "size": String(localized: "Size"), "modified": String(localized: "Modified"),
+            "excerpt": String(localized: "Excerpt"), "size": String(localized: "Size"),
+            "modified": String(localized: "Modified"),
         ]
-        let widths: KeyValuePairs<String, CGFloat> = ["name": 150, "folder": 140, "size": 70, "modified": 120]
+        let widths: KeyValuePairs<String, CGFloat> = [
+            "name": 150, "folder": 120, "excerpt": 200, "size": 70, "modified": 120,
+        ]
         for (identifier, width) in widths {
             let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(identifier))
             column.title = titles[identifier] ?? ""
@@ -109,6 +112,10 @@ final class SearchPanelController: NSObject {
             column.minWidth = 50
             tableView.addTableColumn(column)
         }
+    }
+
+    private func setUpViews() {
+        addColumns()
         tableView.style = .fullWidth
         tableView.allowsMultipleSelection = true
         tableView.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
@@ -168,6 +175,9 @@ extension SearchPanelController: NSTableViewDataSource, NSTableViewDelegate {
             let folder = (result.path as NSString).deletingLastPathComponent
             cell.textField?.stringValue = (folder as NSString).abbreviatingWithTildeInPath
             cell.toolTip = folder
+        case "excerpt":
+            cell.textField?.stringValue = result.excerpt ?? ""
+            cell.toolTip = result.excerpt
         case "size":
             cell.textField?.stringValue = ByteCountFormatter.string(fromByteCount: result.totalSize, countStyle: .file)
         default:
