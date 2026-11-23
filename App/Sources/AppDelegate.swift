@@ -73,7 +73,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The file index (UI tests index only their fixture). The app works without it.
     private func openIndex(fixture: URL?) -> IndexService? {
         do {
-            return try fixture.map(IndexService.openForUITests(fixture:)) ?? IndexService.openDefault()
+            return try fixture.map {
+                try IndexService.openForUITests(fixture: $0, unpluggedDisk: UITestFixture.unpluggedDisk(of: $0))
+            } ?? IndexService.openDefault()
         } catch {
             NSApp.presentError(error)
             return nil

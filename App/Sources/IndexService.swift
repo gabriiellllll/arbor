@@ -46,10 +46,22 @@ final class IndexService {
         return IndexService(store: store)
     }
 
-    /// UI tests index only their fixture folder, in a database next to it.
-    static func openForUITests(fixture: URL) throws -> IndexService {
+    /// UI tests index only their fixture folder, in a database next to it. With `unpluggedDisk`,
+    /// the catalog also holds a disk that is not plugged in (a folder indexed, then deleted).
+    static func openForUITests(fixture: URL, unpluggedDisk: URL? = nil) throws -> IndexService {
         let store = try IndexStore.open(at: fixture.deletingLastPathComponent().appendingPathComponent("index.sqlite"))
         _ = try store.addRoot(path: FolderWatcher.canonicalPath(of: fixture), exclusions: [])
+        if let unpluggedDisk {
+            let root = try store.addRoot(path: FolderWatcher.canonicalPath(of: unpluggedDisk), exclusions: [])
+            try IndexScanner(store: store).scan(root)
+            try store.updateVolumes([MountedVolume(path: root.path, uuid: "ARBOR-UI-TEST-DISK")])
+            let details = DiskDetails(
+                name: unpluggedDisk.lastPathComponent, vendor: "Arbor", model: "UI Test Disk",
+                serialNumber: "UITEST", connection: "USB", capacity: 500_000_000_000, fileSystem: "APFS"
+            )
+            try store.setDetails(root.id, JSONEncoder().encode(details))
+            try FileManager.default.removeItem(at: unpluggedDisk)
+        }
         return IndexService(store: store)
     }
 
