@@ -230,7 +230,11 @@ final class CanvasUITests: XCTestCase {
     func testSearchFindsAResultAndRevealsItsFolderChain() {
         XCTAssertTrue(row("Alpha", in: "Root").waitForExistence(timeout: 10))
         app.typeKey("f", modifierFlags: .command)
-        app.typeText("data")
+        // The field expands with an animation: type once it has the focus.
+        let field = app.searchFields["searchField"]
+        let focused = expectation(for: NSPredicate(format: "hasKeyboardFocus == true"), evaluatedWith: field)
+        XCTAssertEqual(XCTWaiter.wait(for: [focused], timeout: 5), .completed, "Find focuses the search field")
+        field.typeText("data")
         let result = app.tables["searchResults"].staticTexts["data.bin"]
         XCTAssertTrue(result.waitForExistence(timeout: 20), "found once the index is ready")
         result.doubleClick()
