@@ -42,7 +42,8 @@ public enum FileCategory: String, CaseIterable, Codable, Sendable {
     }
 }
 
-/// A search of the index: words in names, and filters. Filters alone also search.
+/// A search of the index: words in names or document text, and filters. Filters alone also
+/// search.
 public struct SearchQuery: Equatable, Codable, Sendable {
     public enum Kind: String, Codable, Sendable {
         case files, folders
@@ -99,6 +100,8 @@ public struct SearchResult: Equatable, Sendable {
     public let isDirectory: Bool
     public let totalSize: Int64
     public let modified: Date
+    /// Where the words appear in the document's text, when they do.
+    public var excerpt: String?
 }
 
 extension IndexStore {
@@ -106,35 +109,60 @@ extension IndexStore {
         guard !query.isEmpty else { return [] }
         let roots = try Dictionary(uniqueKeysWithValues: roots().map { ($0.id, $0.path) })
         return try writer.read { db in
-            var sql = "SELECT item.id, item.rootID, item.name, item.kind, item.totalSize, item.modified FROM item"
+            var sql = "SELECT item.id, item.rootID, item.name, item.kind, item.totalSize, item.modified"
             var arguments: [any DatabaseValueConvertible] = []
             var conditions = ["item.parent IS NOT NULL"]
             let match = query.matchExpression
             if let match {
-                sql += " JOIN item_name ON item_name.rowid = item.id AND item_name MATCH ?"
-                arguments.append(match)
+                // Name matches first, then matches in document text.
+                sql += ", item.id IN (SELECT rowid FROM item_name WHERE item_name MATCH ?) AS byName"
+                conditions.append("""
+                item.id IN (SELECT rowid FROM item_name WHERE item_name MATCH ?
+                            UNION SELECT rowid FROM item_content WHERE item_content MATCH ?)
+                """)
+                arguments += [match, match, match]
             }
+            sql += " FROM item"
             if let tag = query.tag {
                 sql += " JOIN tag ON tag.itemID = item.id AND tag.name = ?"
-                arguments.append(tag)
+                arguments.insert(tag, at: match == nil ? 0 : 1)
             }
             Self.addFilters(query, to: &conditions, &arguments)
             sql += " WHERE " + conditions.joined(separator: " AND ")
-            sql += match != nil ? " ORDER BY item_name.rank" : " ORDER BY item.name"
+            sql += match != nil ? " ORDER BY byName DESC, item.name" : " ORDER BY item.name"
             sql += " LIMIT ?"
             arguments.append(query.limit)
-            return try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments)).compactMap { row in
-                let id: Int64 = row["id"]
-                guard let rootPath = roots[row["rootID"]],
-                      let path = try Self.path(of: id, rootPath: rootPath, db)
-                else {
-                    return nil
+            var results = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments))
+                .compactMap { row -> SearchResult? in
+                    let id: Int64 = row["id"]
+                    guard let rootPath = roots[row["rootID"]],
+                          let path = try Self.path(of: id, rootPath: rootPath, db)
+                    else {
+                        return nil
+                    }
+                    return SearchResult(
+                        id: id, name: row["name"], path: path, isDirectory: row["kind"] == Kind.directory.rawValue,
+                        totalSize: row["totalSize"], modified: Date(timeIntervalSince1970: row["modified"] ?? 0)
+                    )
                 }
-                return SearchResult(
-                    id: id, name: row["name"], path: path, isDirectory: row["kind"] == Kind.directory.rawValue,
-                    totalSize: row["totalSize"], modified: Date(timeIntervalSince1970: row["modified"] ?? 0)
-                )
+            if let match {
+                try Self.addExcerpts(match, to: &results, db)
             }
+            return results
+        }
+    }
+
+    private static func addExcerpts(_ match: String, to results: inout [SearchResult], _ db: Database) throws {
+        guard !results.isEmpty else { return }
+        let ids = results.map(\.id)
+        let excerpts = try Dictionary(uniqueKeysWithValues: Row.fetchAll(db, sql: """
+        SELECT rowid, snippet(item_content, 0, '', '', '…', 12) AS excerpt FROM item_content
+        WHERE item_content MATCH ? AND rowid IN (\(ids.map { _ in "?" }.joined(separator: ",")))
+        """, arguments: StatementArguments([match] + ids)).map { row -> (Int64, String) in
+            (row["rowid"], row["excerpt"])
+        })
+        for index in results.indices {
+            results[index].excerpt = excerpts[results[index].id]
         }
     }
 
