@@ -54,9 +54,10 @@ final class IndexService {
         if let unpluggedDisk {
             let root = try store.addRoot(path: FolderWatcher.canonicalPath(of: unpluggedDisk), exclusions: [])
             try IndexScanner(store: store).scan(root)
-            try store.updateVolumes([MountedVolume(path: root.path, uuid: "ARBOR-UI-TEST-DISK")])
+            let uuid = "ARBOR-UI-TEST-DISK"
+            try store.updateVolumes([MountedVolume(path: root.path, uuid: uuid)])
             let details = DiskDetails(
-                name: unpluggedDisk.lastPathComponent, vendor: "Arbor", model: "UI Test Disk",
+                name: unpluggedDisk.lastPathComponent, volumeUUID: uuid, vendor: "Arbor", model: "UI Test Disk",
                 serialNumber: "UITEST", connection: "USB", capacity: 500_000_000_000, fileSystem: "APFS"
             )
             try store.setDetails(root.id, JSONEncoder().encode(details))
