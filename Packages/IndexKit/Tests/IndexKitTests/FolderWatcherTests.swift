@@ -75,6 +75,10 @@ final class FolderWatcherTests: XCTestCase {
 
     func testCanonicalPathResolvesPrivatePrefix() {
         XCTAssertEqual(FolderWatcher.canonicalPath(of: URL(fileURLWithPath: "/tmp")), "/private/tmp")
+        XCTAssertEqual(
+            FolderWatcher.canonicalPath(of: URL(fileURLWithPath: "/tmp/missing-\(getpid())/a")),
+            "/private/tmp/missing-\(getpid())/a", "missing items resolve through their parent"
+        )
     }
 
     func testNormalizesTrailingSlash() {
