@@ -59,14 +59,21 @@ Delivered in two pull requests: 3a (sidebar, workspaces, tags, history) and 3b (
 
 ## Phase 5 — Search
 - [x] Instant name search (FTS5 + prefixes)
-- [ ] Full-text extraction: PDF, .docx / .xlsx / .pptx, plain text / Markdown / code (background, low priority)
+- [x] Full-text extraction: PDF, .docx / .xlsx / .pptx, plain text / Markdown / code (background, low priority)
 - [x] Search results as a canvas panel, each result can open its parent chain
 - [x] Filters: type, size, date, tag, volume
 - [x] Sidebar Tags section: clicking a tag opens a panel of the items carrying it
 
 Phase 5a notes: Finder tags are read into the index in a background pass after each scan
 and on every change. A result inside a hidden folder reveals its chain only down to the
-last visible folder (panels hide hidden items). Full text (5b) is next.
+last visible folder (panels hide hidden items).
+
+Phase 5b notes: document text is read on a background-priority queue after each scan and
+on every change, then searched after names, with an excerpt column in search panels. The
+first 100,000 characters of each file are searchable; files over 100 MB are skipped. Office
+support covers .docx body text, .xlsx shared strings and .pptx slides (no headers,
+footnotes or speaker notes); RTF, Pages / Numbers / Keynote and legacy .doc / .xls are not
+read.
 
 ## Phase 6 — External disks and shares
 - [ ] Stable volume identity (volume UUID, DiskArbitration)
