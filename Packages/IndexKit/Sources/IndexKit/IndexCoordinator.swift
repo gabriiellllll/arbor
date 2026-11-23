@@ -50,6 +50,7 @@ public final class IndexCoordinator: @unchecked Sendable {
     public func addRoot(path: String, exclusions: [String]) {
         queue.async { [self] in
             guard let root = try? store.addRoot(path: path, exclusions: exclusions) else { return }
+            try? store.updateVolumes()
             try? scan(root)
             startWatching()
         }
@@ -107,19 +108,46 @@ public final class IndexCoordinator: @unchecked Sendable {
         }
     }
 
-    /// Scans the roots that need it, one volume per thread, then watches all roots.
+    /// A disk was plugged in or out: unplugged roots are kept as a catalog, returning ones
+    /// are brought up to date. Returns immediately.
+    public func volumesChanged() {
+        queue.async { [self] in try? prepareRoots() }
+    }
+
+    /// Brings every root up to date, one volume per thread, then watches the available ones.
     private func prepareRoots() throws {
-        let byVolume = try Dictionary(grouping: store.roots().filter(Self.needsScan)) {
-            FolderWatcher.volumeUUID(for: $0.path) ?? $0.path
-        }
+        try store.updateVolumes()
+        let byVolume = try Dictionary(grouping: store.roots()) { FolderWatcher.volumeUUID(for: $0.path) ?? $0.path }
         let volumes = Array(byVolume.values)
         DispatchQueue.concurrentPerform(iterations: volumes.count) { index in
             for root in volumes[index] {
-                try? scan(root)
+                try? prepare(root)
             }
         }
         startWatching()
         readContents()
+    }
+
+    private func prepare(_ root: IndexRoot) throws {
+        guard root.isAvailable else {
+            if !root.isOffline {
+                try store.setOffline(root.id, true)
+                onChange?([root.path])
+            }
+            return
+        }
+        if Self.needsScan(root) {
+            try scan(root)
+        } else if root.isOffline {
+            // ponytail: a returning disk is re-read in full (unchanged items kept), since it may have
+            // changed on another Mac; replaying its own FSEvents history could make that faster.
+            onStatus?(.scanning(path: root.path, items: 0))
+            try store.setLastEventID(root.id, FolderWatcher.currentEventID)
+            try IndexUpdater(store: store).refreshAll(root, control: control)
+            try store.setOffline(root.id, false)
+            onStatus?(.idle)
+            onChange?([root.path])
+        }
     }
 
     /// A full scan is needed when never scanned, or when the volume's event history changed
@@ -128,7 +156,10 @@ public final class IndexCoordinator: @unchecked Sendable {
         root.scannedAt == nil || root.lastEventID == nil || root.volumeUUID != FolderWatcher.volumeUUID(for: root.path)
     }
 
+    /// Scans a root again from scratch, unless its folder or disk is missing (its items are then
+    /// kept as a catalog).
     private func scan(_ root: IndexRoot) throws {
+        guard root.isAvailable else { return }
         // Changes during the scan are replayed afterwards, from this event.
         let eventID = FolderWatcher.currentEventID
         let path = root.path
@@ -137,6 +168,7 @@ public final class IndexCoordinator: @unchecked Sendable {
             self?.onStatus?(.scanning(path: path, items: count))
         }
         try store.markScanned(root.id, eventID: eventID, volumeUUID: FolderWatcher.volumeUUID(for: path))
+        try store.setOffline(root.id, false)
         onChange?([path])
         onStatus?(.readingTags(path: path))
         try IndexScanner(store: store).readTags(root, control: control)
@@ -146,7 +178,7 @@ public final class IndexCoordinator: @unchecked Sendable {
     }
 
     private func startWatching() {
-        guard let roots = try? store.roots(), !roots.isEmpty else {
+        guard let roots = try? store.roots().filter(\.isAvailable), !roots.isEmpty else {
             watcher.watch([])
             return
         }
