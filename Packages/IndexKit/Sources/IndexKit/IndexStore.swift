@@ -15,6 +15,12 @@ public struct IndexRoot: Equatable, Sendable {
     public let scannedAt: Date?
     /// When Finder tags were last read for the whole root.
     public let tagsReadAt: Date?
+    /// Stable volume UUID, for a root that is a volume's mount point.
+    public let volumeID: String?
+    /// The folder or disk was missing when last checked: its items are kept as a catalog.
+    public let isOffline: Bool
+    /// What the app saved about the disk.
+    public let details: Data?
 }
 
 /// An indexed file or folder. For folders, `totalSize` and `totalAllocated` include everything
@@ -121,6 +127,28 @@ public final class IndexStore: Sendable {
             try db.execute(
                 sql: "UPDATE root SET scannedAt = ?, lastEventID = ?, volumeUUID = ? WHERE id = ?",
                 arguments: [Date().timeIntervalSince1970, Int64(bitPattern: eventID), volumeUUID, id]
+            )
+        }
+    }
+
+    /// Saves what the app knows about a root's disk.
+    public func setDetails(_ id: Int64, _ details: Data?) throws {
+        try writer.write { db in
+            try db.execute(sql: "UPDATE root SET details = ? WHERE id = ?", arguments: [details, id])
+        }
+    }
+
+    public func setOffline(_ id: Int64, _ offline: Bool) throws {
+        try writer.write { db in
+            try db.execute(sql: "UPDATE root SET offline = ? WHERE id = ?", arguments: [offline, id])
+        }
+    }
+
+    /// Records a root's volume UUID, and its new mount point when its disk came back elsewhere.
+    func setVolume(_ id: Int64, path: String, volumeID: String) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: "UPDATE root SET path = ?, volumeID = ? WHERE id = ?", arguments: [path, volumeID, id]
             )
         }
     }
@@ -238,7 +266,8 @@ public final class IndexStore: Sendable {
             id: row["id"], path: row["path"], itemID: row["itemID"], exclusions: exclusions,
             volumeUUID: row["volumeUUID"], lastEventID: eventID.map { UInt64(bitPattern: $0) },
             scannedAt: scannedAt.map(Date.init(timeIntervalSince1970:)),
-            tagsReadAt: tagsReadAt.map(Date.init(timeIntervalSince1970:))
+            tagsReadAt: tagsReadAt.map(Date.init(timeIntervalSince1970:)),
+            volumeID: row["volumeID"], isOffline: row["offline"], details: row["details"]
         )
     }
 
@@ -333,6 +362,16 @@ extension IndexStore {
                 UPDATE item SET contentRead = 0 WHERE id = new.id;
             END;
             """)
+        }
+        migrator.registerMigration("v5-catalog") { db in
+            try db.alter(table: "root") { table in
+                // Stable volume UUID of a root that is a volume's mount point.
+                table.add(column: "volumeID", .text)
+                // Set while the root's folder or disk is missing: its items stay as a catalog.
+                table.add(column: "offline", .boolean).notNull().defaults(to: false)
+                // Opaque details the app keeps about the disk (shown while it is unplugged).
+                table.add(column: "details", .blob)
+            }
         }
         return migrator
     }
