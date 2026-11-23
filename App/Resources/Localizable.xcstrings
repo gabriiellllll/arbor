@@ -55,7 +55,27 @@
       }
     },
     "%lld results" : {
-
+      "comment" : "Number of results in a search panel title bar",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld result"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld results"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "About Arbor" : {
       "comment" : "App menu item"
