@@ -28,6 +28,13 @@ public enum NetworkShares {
         }
     }
 
+    /// The URL of a server address typed by the user: `nas.local/Media` means SMB.
+    public static func url(from address: String) -> URL? {
+        let address = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let url = URL(string: address.contains("://") ? address : "smb://\(address)")
+        return url?.host?.isEmpty == false ? url : nil
+    }
+
     /// Whether `error` means the user cancelled the sign-in or share picker.
     public static func isCancellation(_ error: any Error) -> Bool {
         let error = error as NSError
