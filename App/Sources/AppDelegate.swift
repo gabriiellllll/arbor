@@ -62,6 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .compactMap { manager.urls(for: $0, in: .userDomainMask).first }
                 + [URL(fileURLWithPath: "/Applications", isDirectory: true)]
             try database.seedIfEmpty(defaultWorkspaceName: String(localized: "My Workspace"), favorites: places)
+            if UITestFixture.isActive {
+                try database.rememberShare(UITestFixture.rememberedShare, name: "Projects")
+            }
             return database
         } catch {
             NSApp.presentError(error)
