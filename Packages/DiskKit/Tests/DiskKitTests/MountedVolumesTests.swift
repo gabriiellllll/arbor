@@ -8,6 +8,7 @@ final class MountedVolumesTests: XCTestCase {
         XCTAssertTrue(first.isRoot)
         XCTAssertEqual(first.url.path, "/")
         XCTAssertFalse(first.name.isEmpty)
+        XCTAssertFalse(first.isNetwork)
     }
 
     func testOrderPutsRootFirstThenNames() {
