@@ -186,6 +186,15 @@
     "Computer" : {
 
     },
+    "Connect" : {
+
+    },
+    "Connect to Server" : {
+
+    },
+    "Connect to Server…" : {
+
+    },
     "Connection" : {
 
     },
@@ -249,6 +258,9 @@
 
     },
     "Edit" : {
+
+    },
+    "Enter a server address, such as smb://nas.local/Media." : {
 
     },
     "Excerpt" : {

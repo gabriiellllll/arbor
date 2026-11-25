@@ -136,6 +136,10 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         }
     }
 
+    @objc func connectToServer(_: Any?) {
+        split.sidebar.askForServer()
+    }
+
     @objc func zoomIn(_: Any?) {
         canvas.canvasView.zoomIn()
     }

@@ -10,6 +10,14 @@ final class MainMenuTests: XCTestCase {
         XCTAssertEqual(quit.keyEquivalent, "q")
         XCTAssertEqual(quit.keyEquivalentModifierMask, .command)
     }
+
+    func testConnectToServerUsesCommandK() throws {
+        let item = try XCTUnwrap(MainMenu.fileMenu().items.first {
+            $0.action == #selector(MainWindowController.connectToServer(_:))
+        })
+        XCTAssertEqual(item.keyEquivalent, "k")
+        XCTAssertEqual(item.keyEquivalentModifierMask, .command)
+    }
 }
 
 @MainActor
