@@ -35,6 +35,9 @@ enum UITestFixture {
         fixture.deletingLastPathComponent().appendingPathComponent("Archive", isDirectory: true)
     }
 
+    /// A remembered network share that is not mounted (its server does not exist).
+    static let rememberedShare = URL(string: "smb://arbor-ui-test.invalid/Projects")!
+
     /// UI tests trash into a folder next to the fixture, never the user's Trash.
     static func trash(in fixture: URL) -> FileOperationRunner.Trash {
         let folder = fixture.deletingLastPathComponent().appendingPathComponent("Trash", isDirectory: true)
