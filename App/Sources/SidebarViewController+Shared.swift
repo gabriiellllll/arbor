@@ -54,6 +54,31 @@ extension SidebarViewController {
         }
     }
 
+    /// Asks for a server address (`nas.local/Media`, `smb://…`, `nfs://…`) and connects to it.
+    func askForServer() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Connect to Server")
+        alert.informativeText = String(localized: "Enter a server address, such as smb://nas.local/Media.")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 22))
+        field.placeholderString = "smb://"
+        field.setAccessibilityIdentifier("serverAddress")
+        alert.accessoryView = field
+        alert.addButton(withTitle: String(localized: "Connect"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.window.initialFirstResponder = field
+        alert.beginSheetModal(for: window) { [weak self] response in
+            MainActor.assumeIsolated {
+                guard response == .alertFirstButtonReturn else { return }
+                guard let url = NetworkShares.url(from: field.stringValue) else {
+                    NSSound.beep()
+                    return
+                }
+                self?.connect(to: url, name: url.host ?? field.stringValue)
+            }
+        }
+    }
+
     @objc func forgetShare() {
         guard case let .place(place) = node(at: outlineView.clickedRow)?.kind else { return }
         try? database.forgetShare(place.url)

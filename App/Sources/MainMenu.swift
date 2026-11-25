@@ -101,6 +101,11 @@ extension MainMenu {
             action: #selector(MainWindowController.openDocument(_:)),
             keyEquivalent: "o"
         )
+        menu.addItem(
+            withTitle: String(localized: "Connect to Server…"),
+            action: #selector(MainWindowController.connectToServer(_:)),
+            keyEquivalent: "k"
+        )
         menu.addItem(.separator())
         menu.addItem(
             withTitle: String(localized: "Rename"), action: #selector(MainWindowController.renameItem(_:)),
