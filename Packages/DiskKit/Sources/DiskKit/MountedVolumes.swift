@@ -10,6 +10,18 @@ public struct Volume: Equatable, Sendable {
     /// The network share mounted here (`smb://server/share`), nil for a local disk.
     public var remountURL: URL?
 
+    public init(
+        url: URL, name: String, isRoot: Bool = false, isRemovable: Bool = false, isInternal: Bool = false,
+        remountURL: URL? = nil
+    ) {
+        self.url = url
+        self.name = name
+        self.isRoot = isRoot
+        self.isRemovable = isRemovable
+        self.isInternal = isInternal
+        self.remountURL = remountURL
+    }
+
     public var isNetwork: Bool {
         remountURL != nil
     }
