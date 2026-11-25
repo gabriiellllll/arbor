@@ -80,8 +80,8 @@ read.
 - [x] Offline catalog: browse and search unplugged disks, "plug in disk X" hint
 - [x] Disk details: vendor, model, serial, connection type, capacity, file system (IOKit)
 - [x] User chooses which disks join the catalog
-- [ ] Network shares (SMB / AFP / NFS): remembered, one-click reconnect (NetFS), Keychain credentials
-- [ ] Sidebar Shared section: mounted network shares and servers seen on the network
+- [x] Network shares (SMB / AFP / NFS): remembered, one-click reconnect (NetFS), Keychain credentials
+- [x] Sidebar Shared section: mounted network shares and servers seen on the network
 
 Phase 6a notes: the catalog is the index. A disk joins it from its sidebar menu ("Add to
 Catalog") or Settings › Index; nothing is added automatically. An unplugged disk keeps its
@@ -90,7 +90,17 @@ items: it stays in the sidebar (greyed), its folders open as greyed, read-only p
 it is found again under another mount path. A disk plugged back in is re-read in full,
 keeping unchanged items (and their document text), because it may have changed on another
 Mac. Disk details come from Disk Arbitration and the I/O Registry and are saved, so an
-unplugged disk shows them too. Network shares (6b) are next.
+unplugged disk shows them too.
+
+Phase 6b notes: the sidebar's Shared section lists mounted network shares, remembered shares
+that are not mounted, and the SMB servers advertised on the local network (Bonjour; macOS asks
+for Local Network access once). Every network share mounted, from Arbor or the Finder, is
+remembered by its URL; clicking a remembered share mounts it again and opens it, and "Forget
+Share" drops it. Clicking a server shows macOS's share picker; File › Connect to Server… (⌘K)
+takes an address (`nas.local/Media` means SMB). Mounting goes through NetFS with macOS's own
+sign-in window, which saves the password in the Keychain and reuses it: Arbor never sees it.
+Only SMB servers are browsed (AFP is deprecated, NFS servers rarely advertise); AFP and NFS
+shares still mount by address.
 
 ## Phase 7 — Batch rename and merge
 - [ ] Rename engine: find/replace (regex, case), prefix/suffix, numbering, dates (created, modified, EXIF), case change (tested)
