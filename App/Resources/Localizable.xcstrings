@@ -215,6 +215,9 @@
         }
       }
     },
+    "Couldn’t connect to “%@”." : {
+
+    },
     "Created" : {
 
     },
@@ -279,6 +282,9 @@
 
     },
     "Folders" : {
+
+    },
+    "Forget Share" : {
 
     },
     "Forward" : {
@@ -413,6 +419,9 @@
 
     },
     "No operations" : {
+
+    },
+    "Not connected. Click to connect to %@." : {
 
     },
     "Not plugged in. Browse its catalog, or plug it in." : {
@@ -568,6 +577,9 @@
 
     },
     "Settings…" : {
+
+    },
+    "Shared" : {
 
     },
     "Show Inspector" : {

@@ -1,5 +1,6 @@
 import AppKit
 import CanvasKit
+import DiskKit
 
 /// A row of the sidebar outline. A class, because NSOutlineView tracks items by identity.
 final class SidebarNode: NSObject {
@@ -12,7 +13,7 @@ final class SidebarNode: NSObject {
     }
 
     enum Section {
-        case workspaces, favorites, locations, tags
+        case workspaces, favorites, locations, shared, tags
     }
 
     let kind: Kind
@@ -38,6 +39,14 @@ final class SidebarViewController: NSViewController {
     /// Finder tags in the index, most used first.
     var tagNames: (() -> [String])? {
         didSet { reload() }
+    }
+
+    /// SMB servers on the local network, when browsing (not in tests).
+    var servers: ServerBrowser? {
+        didSet {
+            servers?.onChange = { [weak self] in self?.reload() }
+            reload()
+        }
     }
 
     private var tags: [String] = []
@@ -106,6 +115,10 @@ final class SidebarViewController: NSViewController {
                 Place(url: URL(fileURLWithPath: $0.path, isDirectory: true), name: $0.diskName, kind: .offlineDisk)
             }).map { SidebarNode(.place($0)) }),
         ]
+        let shared = sharedPlaces()
+        if !shared.isEmpty {
+            sections.append(SidebarNode(.header(.shared), children: shared.map { SidebarNode(.place($0)) }))
+        }
         if !tags.isEmpty {
             sections.append(SidebarNode(.header(.tags), children: tags.map { SidebarNode(.tag($0)) }))
         }
@@ -140,6 +153,8 @@ final class SidebarViewController: NSViewController {
             onSwitchWorkspace?(workspace.id)
         case let .favorite(favorite):
             onOpen?(favorite.url, favorite.colorIndex)
+        case let .place(place) where place.isRemote:
+            connect(to: place.url, name: place.name)
         case let .place(place):
             onOpen?(place.url, nil)
         case let .tag(name):
@@ -216,6 +231,8 @@ extension SidebarViewController: NSOutlineViewDataSource, NSOutlineViewDelegate 
             cell.textField?.textColor = .secondaryLabelColor
             cell.toolTip = String(localized: "Not plugged in. Browse its catalog, or plug it in.")
             return cell
+        case let .place(place) where place.isRemote:
+            return remoteCell(place)
         case let .place(place):
             return SidebarCell.row(title: place.name, icon: NSWorkspace.shared.icon(forFile: place.url.path), dot: nil)
         case let .tag(name):
@@ -231,6 +248,7 @@ extension SidebarViewController: NSOutlineViewDataSource, NSOutlineViewDelegate 
         case .workspaces: String(localized: "Workspaces")
         case .favorites: String(localized: "Favorites")
         case .locations: String(localized: "Locations")
+        case .shared: String(localized: "Shared")
         case .tags: String(localized: "Tags")
         }
     }
