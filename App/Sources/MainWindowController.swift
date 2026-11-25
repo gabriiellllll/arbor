@@ -54,6 +54,10 @@ final class MainWindowController: NSWindowController, NSMenuItemValidation {
         canvas.onViewportChange = { [weak self] in self?.updateZoomLabel() }
         updateZoomLabel()
         setUpFileOperations(in: window)
+        // UI tests run without the network (and its Local Network prompt).
+        if !UITestFixture.isActive {
+            split.sidebar.browseServers()
+        }
         if let index {
             canvas.sizeLookup = { [weak index] path in index?.sizes(ofFolder: path) ?? [:] }
             canvas.index = index

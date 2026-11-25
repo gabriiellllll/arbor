@@ -7,6 +7,17 @@ struct Place: Equatable {
         case computer, iCloudDrive, oneDrive, volume
         /// A cataloged disk that is not plugged in.
         case offlineDisk
+        /// A mounted network share.
+        case share
+        /// A remembered network share that is not mounted; `url` is the share's URL.
+        case disconnectedShare
+        /// A file server seen on the network; `url` is the server's URL.
+        case server
+    }
+
+    /// A remote place: clicking it connects to the share or server instead of opening a folder.
+    var isRemote: Bool {
+        kind == .disconnectedShare || kind == .server
     }
 
     let url: URL
@@ -15,7 +26,7 @@ struct Place: Equatable {
 }
 
 /// The sidebar's Locations: this computer, cloud drives that exist, other mounted volumes,
-/// then cataloged disks that are not plugged in.
+/// then cataloged disks that are not plugged in. Its Shared section: network shares and servers.
 enum Locations {
     static func all(home: URL = FileManager.default.homeDirectoryForCurrentUser, offline: [Place] = []) -> [Place] {
         let computer = Place(
@@ -23,10 +34,21 @@ enum Locations {
             name: Host.current().localizedName ?? String(localized: "Computer"),
             kind: .computer
         )
-        let volumes = MountedVolumes.current().filter { !$0.isRoot }.map {
+        let volumes = MountedVolumes.current().filter { !$0.isRoot && !$0.isNetwork }.map {
             Place(url: $0.url, name: $0.name, kind: .volume)
         }
         return [computer] + cloud(home: home) + volumes + offline
+    }
+
+    /// Mounted network shares, remembered shares that are not mounted (connected in one click),
+    /// then servers seen on the network.
+    static func shared(mounted: [Volume], remembered: [RememberedShare], servers: [NetworkServer]) -> [Place] {
+        let mountedURLs = Set(mounted.compactMap(\.remountURL))
+        return mounted.map { Place(url: $0.url, name: $0.name, kind: .share) }
+            + remembered.filter { !mountedURLs.contains($0.url) }.map {
+                Place(url: $0.url, name: $0.name, kind: .disconnectedShare)
+            }
+            + servers.map { Place(url: $0.url, name: $0.name, kind: .server) }
     }
 
     /// iCloud Drive and OneDrive folders, when present in `home`.
