@@ -16,4 +16,13 @@ final class NetworkSharesTests: XCTestCase {
         XCTAssertTrue(NetworkShares.isCancellation(NetworkShares.error(Int32(userCanceledErr))))
         XCTAssertFalse(NetworkShares.isCancellation(NetworkShares.error(-5998)))
     }
+
+    func testAddressesDefaultToSMB() {
+        XCTAssertEqual(NetworkShares.url(from: " nas.local/Media ")?.absoluteString, "smb://nas.local/Media")
+        XCTAssertEqual(NetworkShares.url(from: "afp://old-mac.local")?.absoluteString, "afp://old-mac.local")
+        XCTAssertEqual(NetworkShares.url(from: "nfs://10.0.0.2/export")?.absoluteString, "nfs://10.0.0.2/export")
+        XCTAssertNil(NetworkShares.url(from: ""))
+        XCTAssertNil(NetworkShares.url(from: "smb://"))
+        XCTAssertNil(NetworkShares.url(from: "bad host/share"))
+    }
 }
