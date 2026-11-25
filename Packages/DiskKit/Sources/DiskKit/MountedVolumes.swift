@@ -7,6 +7,12 @@ public struct Volume: Equatable, Sendable {
     public let isRoot: Bool
     public let isRemovable: Bool
     public let isInternal: Bool
+    /// The network share mounted here (`smb://server/share`), nil for a local disk.
+    public var remountURL: URL?
+
+    public var isNetwork: Bool {
+        remountURL != nil
+    }
 }
 
 /// Volumes currently mounted and visible to the user (hidden system volumes skipped).
@@ -14,6 +20,7 @@ public enum MountedVolumes {
     public static func current() -> [Volume] {
         let keys: [URLResourceKey] = [
             .volumeNameKey, .volumeIsRootFileSystemKey, .volumeIsRemovableKey, .volumeIsInternalKey,
+            .volumeIsLocalKey, .volumeURLForRemountingKey,
         ]
         let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]
@@ -25,7 +32,8 @@ public enum MountedVolumes {
                 name: values.volumeName ?? url.lastPathComponent,
                 isRoot: values.volumeIsRootFileSystem ?? false,
                 isRemovable: values.volumeIsRemovable ?? false,
-                isInternal: values.volumeIsInternal ?? false
+                isInternal: values.volumeIsInternal ?? false,
+                remountURL: values.volumeIsLocal == false ? values.volumeURLForRemounting : nil
             )
         })
     }
