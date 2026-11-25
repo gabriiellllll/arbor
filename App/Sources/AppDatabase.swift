@@ -27,7 +27,7 @@ struct Favorite: Codable, Equatable, FetchableRecord, MutablePersistableRecord {
 
 /// The app's own data: workspaces (each with its canvas), favorites and settings, in SQLite.
 final class AppDatabase: Sendable {
-    private let writer: any DatabaseWriter
+    let writer: any DatabaseWriter
 
     private init(_ writer: any DatabaseWriter) throws {
         self.writer = writer
@@ -69,6 +69,12 @@ final class AppDatabase: Sendable {
             try db.create(table: "setting") { table in
                 table.primaryKey("key", .text)
                 table.column("value", .text)
+            }
+        }
+        migrator.registerMigration("v2-shares") { db in
+            try db.create(table: "share") { table in
+                table.primaryKey("url", .text)
+                table.column("name", .text).notNull()
             }
         }
         return migrator

@@ -66,6 +66,16 @@ final class AppDatabaseTests: XCTestCase {
         XCTAssertEqual(try database.favorites().map(\.path), [places[1].path])
     }
 
+    func testSharesAreRememberedRenamedAndForgotten() throws {
+        let nas = try XCTUnwrap(URL(string: "smb://nas.local/Media"))
+        try database.rememberShare(nas, name: "Media")
+        try database.rememberShare(XCTUnwrap(URL(string: "smb://nas.local/archive")), name: "archive")
+        try database.rememberShare(nas, name: "Movies")
+        XCTAssertEqual(try database.shares().map(\.name), ["archive", "Movies"])
+        try database.forgetShare(nas)
+        XCTAssertEqual(try database.shares().map(\.url.absoluteString), ["smb://nas.local/archive"])
+    }
+
     func testOnDiskDatabaseKeepsData() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("arbor-\(UUID().uuidString).sqlite")
         defer { try? FileManager.default.removeItem(at: url) }
