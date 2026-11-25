@@ -44,6 +44,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.arbor.Arbor
         GENERATE_INFOPLIST_FILE: YES
+        # Keys the generated Info.plist cannot hold (arrays), merged into it.
+        INFOPLIST_FILE: App/Info.plist
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
         INFOPLIST_KEY_CFBundleDisplayName: Arbor
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
