@@ -21,8 +21,9 @@ final class BatchRenameUITests: XCTestCase {
     @MainActor
     func testRenameTwoItemsWithATemplateThenUndo() {
         XCTAssertTrue(row("notes.txt").waitForExistence(timeout: 10))
-        row("Beta").click()
-        XCUIElement.perform(withKeyModifiers: .command) { row("notes.txt").click() }
+        // The file first: selecting Beta opens its panel and may scroll Root aside.
+        row("notes.txt").click()
+        XCUIElement.perform(withKeyModifiers: .command) { row("Beta").click() }
 
         app.menuBars.menuBarItems["File"].click()
         app.menuBars.menuItems["Rename 2 Items…"].click()
