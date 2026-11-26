@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 
 /// How to rename a batch of items. Applied in order: find/replace, then the template, then
 /// the case change. The extension is kept apart unless `includesExtension`.
@@ -35,6 +36,29 @@ public struct RenameSubject: Equatable, Sendable {
         self.created = created
         self.modified = modified
         self.photoTaken = photoTaken
+    }
+}
+
+extension RenameSubject {
+    /// Reads an item's dates; the photo date only for images that have one (EXIF).
+    public static func load(_ url: URL) -> RenameSubject {
+        let values = try? url.resourceValues(forKeys: [.creationDateKey, .contentModificationDateKey])
+        return RenameSubject(
+            url: url, created: values?.creationDate, modified: values?.contentModificationDate,
+            photoTaken: photoDate(of: url)
+        )
+    }
+
+    /// EXIF DateTimeOriginal, a local time without a time zone.
+    static func photoDate(of url: URL) -> Date? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let exif = properties[kCGImagePropertyExifDictionary] as? [CFString: Any],
+              let text = exif[kCGImagePropertyExifDateTimeOriginal] as? String else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+        return formatter.date(from: text)
     }
 }
 
