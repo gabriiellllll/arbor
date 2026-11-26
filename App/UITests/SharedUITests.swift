@@ -35,7 +35,7 @@ final class SharedUITests: XCTestCase {
         address.click()
         address.typeText("nas.local/Media")
         attachScreenshot("connect to server")
-        app.buttons["Cancel"].click()
+        app.typeKey(.escape, modifierFlags: [])
         XCTAssertTrue(address.waitForNonExistence(timeout: 5))
 
         share.rightClick()
