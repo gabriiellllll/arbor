@@ -1,4 +1,5 @@
 @testable import Arbor
+import DiskKit
 import XCTest
 
 /// Workspace switching and the sidebar, on an in-memory database and a temporary folder.
@@ -60,7 +61,9 @@ final class WorkspaceTests: XCTestCase {
 
     func testSidebarListsWorkspacesFavoritesAndLocations() {
         let sidebar = split.sidebar
-        XCTAssertEqual(sidebar.sections.count, 3)
+        // Shared appears when this Mac has network shares mounted.
+        let shared = MountedVolumes.current().contains(where: \.isNetwork)
+        XCTAssertEqual(sidebar.sections.count, shared ? 4 : 3)
         XCTAssertEqual(sidebar.section(.workspaces)?.children.count, 1)
         XCTAssertEqual(sidebar.section(.favorites)?.children.count, 1)
         XCTAssertGreaterThanOrEqual(sidebar.section(.locations)?.children.count ?? 0, 1, "at least this computer")

@@ -165,6 +165,9 @@
     "Capacity" : {
 
     },
+    "Case" : {
+
+    },
     "Clear" : {
 
     },
@@ -236,6 +239,12 @@
     "Cut" : {
 
     },
+    "Date Created" : {
+
+    },
+    "Date Modified" : {
+
+    },
     "Delete" : {
 
     },
@@ -287,6 +296,9 @@
     "Files" : {
 
     },
+    "Find" : {
+
+    },
     "Find…" : {
 
     },
@@ -332,6 +344,9 @@
     "Images" : {
 
     },
+    "Include the extension" : {
+
+    },
     "Index up to date" : {
 
     },
@@ -345,6 +360,12 @@
 
     },
     "Indigo" : {
+
+    },
+    "Insert" : {
+
+    },
+    "Invalid name" : {
 
     },
     "Its canvas will be lost. Your files are not affected." : {
@@ -372,6 +393,9 @@
 
     },
     "Manual" : {
+
+    },
+    "Match case" : {
 
     },
     "Minimize" : {
@@ -424,6 +448,9 @@
     "Name" : {
 
     },
+    "Name already used in this folder" : {
+
+    },
     "New Workspace" : {
 
     },
@@ -431,6 +458,9 @@
 
     },
     "No operations" : {
+
+    },
+    "No photo date" : {
 
     },
     "Not connected. Click to connect to %@." : {
@@ -443,6 +473,12 @@
 
     },
     "Not scanned yet" : {
+
+    },
+    "Number" : {
+
+    },
+    "Numbers start at %lld" : {
 
     },
     "Only in %@" : {
@@ -493,6 +529,9 @@
     "Paused" : {
 
     },
+    "Photo Date" : {
+
+    },
     "Pink" : {
 
     },
@@ -523,6 +562,9 @@
     "Redo %@" : {
 
     },
+    "Regular expression" : {
+
+    },
     "Remove" : {
 
     },
@@ -541,6 +583,15 @@
     "Rename" : {
 
     },
+    "Rename %lld Items" : {
+
+    },
+    "Rename %lld Items…" : {
+
+    },
+    "Renaming %lld items" : {
+
+    },
     "Renaming “%@” to “%@”" : {
       "localizations" : {
         "en" : {
@@ -554,10 +605,16 @@
     "Replace" : {
 
     },
+    "Replace with" : {
+
+    },
     "Replacing moves the existing item to the Trash." : {
 
     },
     "Resume" : {
+
+    },
+    "Same name as another item" : {
 
     },
     "Scanning “%@”: %@ items" : {
@@ -639,6 +696,9 @@
     "This folder no longer exists." : {
 
     },
+    "Title Case" : {
+
+    },
     "Tree Downward" : {
 
     },
@@ -646,6 +706,12 @@
 
     },
     "Turn on Arbor (click + to add it if it is not listed)." : {
+
+    },
+    "UPPERCASE" : {
+
+    },
+    "Unchanged" : {
 
     },
     "Undo" : {
@@ -697,6 +763,9 @@
 
     },
     "iCloud Drive" : {
+
+    },
+    "lowercase" : {
 
     }
   },

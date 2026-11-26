@@ -94,13 +94,10 @@ public struct FileOperationRunner: Sendable {
                     try rename(source, to: name)
                     advance()
                 }
+            case let .renameAll(names):
+                try renameAll(operation.sources, to: names)
             case let .revert(changes):
-                progress.totalItems = changes.count
-                for change in changes.reversed() {
-                    try checkpoint()
-                    try revert(change)
-                    advance()
-                }
+                try revert(changes)
             }
         }
 
@@ -205,6 +202,38 @@ public struct FileOperationRunner: Sendable {
             }
             try FileManager.default.moveItem(at: source, to: destination)
             result.changes.append(Change(kind: .moved(from: source), url: destination))
+        }
+
+        private mutating func renameAll(_ sources: [URL], to names: [String]) throws {
+            if let invalid = names.first(where: { !BatchMove.isValid($0) }) {
+                throw Failure.invalidName(invalid)
+            }
+            try moveAll(zip(sources, names).map { source, name in
+                BatchMove.Move(
+                    source: source,
+                    destination: source.deletingLastPathComponent().appendingPathComponent(name)
+                )
+            })
+        }
+
+        private mutating func revert(_ changes: [Change]) throws {
+            progress.totalItems = changes.count
+            // Renames and moves only: reverted together, so swapped names come back.
+            if changes.allSatisfy(\.isMove) {
+                return try moveAll(changes.reversed().compactMap { change in
+                    guard case let .moved(from) = change.kind else { return nil }
+                    return BatchMove.Move(source: change.url, destination: from)
+                })
+            }
+            for change in changes.reversed() {
+                try checkpoint()
+                try revert(change)
+                advance()
+            }
+        }
+
+        private mutating func moveAll(_ moves: [BatchMove.Move]) throws {
+            result.changes += try BatchMove.perform(moves, checkpoint: checkpoint) { advance() }
         }
 
         private mutating func revert(_ change: Change) throws {

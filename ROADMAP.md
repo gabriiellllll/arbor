@@ -103,10 +103,21 @@ Only SMB servers are browsed (AFP is deprecated, NFS servers rarely advertise); 
 shares still mount by address.
 
 ## Phase 7 — Batch rename and merge
-- [ ] Rename engine: find/replace (regex, case), prefix/suffix, numbering, dates (created, modified, EXIF), case change (tested)
-- [ ] Rename sheet with live preview and collision detection, across folders
-- [ ] Undoable execution
+- [x] Rename engine: find/replace (regex, case), prefix/suffix, numbering, dates (created, modified, EXIF), case change (tested)
+- [x] Rename sheet with live preview and collision detection, across folders
+- [x] Undoable execution
 - [ ] Merge same-name folders with conflict report and per-file choice
+
+Phase 7a notes: File › Rename (one item renames in place; several, across panels, open the
+batch rename sheet). The sheet applies, in order, find/replace (plain or regular expression,
+case-insensitive unless asked), a name template with tokens (`{name}`, `{n:3}`,
+`{created:yyyy-MM-dd}`, `{modified:…}`, `{exif:…}` for the date a photo was taken), and a case
+change; the extension is kept unless included. The preview shows every new name and blocks
+renaming while one is invalid, given twice in a folder (ignoring case), already used by an
+item outside the batch, or needs a photo date the item lacks. Numbering follows folder, then
+name order. Renaming is all or nothing: items move through temporary names, so they can swap
+names, and everything goes back if one fails. One undo restores the whole batch. Folder
+merge (7b) is next.
 
 ## Phase 8 — Gallery and previews
 - [ ] QuickLook thumbnails with disk cache

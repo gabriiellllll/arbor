@@ -125,6 +125,8 @@ final class FileOperationsController {
                 : String(localized: "Moving \(count) items to the Trash")
         case let .rename(name):
             return String(localized: "Renaming “\(first)” to “\(name)”")
+        case .renameAll:
+            return String(localized: "Renaming \(count) items")
         case .revert:
             return String(localized: "Undoing")
         }
