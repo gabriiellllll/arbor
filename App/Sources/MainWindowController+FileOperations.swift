@@ -56,10 +56,17 @@ extension MainWindowController {
                 forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]
             )
         case #selector(renameItem(_:)):
-            canvas.activePanel.flatMap { canvas.panels[$0] }?.selectedItems.count == 1
+            validateRename(item)
         default:
             true
         }
+    }
+
+    /// One item is renamed in place, several with the batch rename sheet.
+    private func validateRename(_ item: NSMenuItem) -> Bool {
+        let count = canvas.operationTargets.count
+        item.title = count > 1 ? String(localized: "Rename \(count) Items…") : String(localized: "Rename")
+        return count > 1 || canvas.activePanel.flatMap { canvas.panels[$0] }?.selectedItems.count == 1
     }
 
     /// Shows activity, and opens the operations list when work takes more than a second.

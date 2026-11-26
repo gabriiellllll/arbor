@@ -76,10 +76,6 @@ extension CanvasViewController {
         onPerform?(FileOperation(kind: .trash, sources: targets), String(localized: "Move to Trash"))
     }
 
-    func renameSelection() {
-        activePanel.flatMap { panels[$0] }?.beginRename()
-    }
-
     func transfer(_ urls: [URL], into folder: URL, copying: Bool) {
         let kind: FileOperationKind = copying ? .copy(into: folder) : .move(into: folder)
         onPerform?(
