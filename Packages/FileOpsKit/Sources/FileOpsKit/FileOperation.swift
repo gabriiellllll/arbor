@@ -6,6 +6,9 @@ public enum FileOperationKind: Equatable, Sendable {
     case move(into: URL)
     case trash
     case rename(newName: String)
+    /// Renames each source to the name at the same index, all or nothing. Items may take each
+    /// other's names.
+    case renameAll(newNames: [String])
     /// Undoes recorded changes (newest first).
     case revert([Change])
 }
@@ -35,6 +38,13 @@ public struct Change: Equatable, Sendable {
 
     public let kind: Kind
     public let url: URL
+
+    var isMove: Bool {
+        if case .moved = kind {
+            return true
+        }
+        return false
+    }
 
     public init(kind: Kind, url: URL) {
         self.kind = kind
