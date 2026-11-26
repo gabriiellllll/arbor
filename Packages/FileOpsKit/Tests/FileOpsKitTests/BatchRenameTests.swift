@@ -85,4 +85,66 @@ final class BatchRenameTests: XCTestCase {
         rules.caseChange = .upper
         XCTAssertEqual(names(["draft.md"], rules), ["01 FINAL.md"])
     }
+
+    // MARK: - Collisions
+
+    private func problems(
+        _ paths: [String], _ rules: RenameRules, existing: Set<String> = []
+    ) -> [RenamePreview.Problem?] {
+        let subjects = paths.map { RenameSubject(url: URL(fileURLWithPath: $0)) }
+        let all = existing.union(paths)
+        return BatchRename.preview(subjects, rules: rules, exists: { all.contains($0.path) }).rows.map(\.problem)
+    }
+
+    func testSameNewNameInOneFolderIsADuplicate() {
+        var rules = RenameRules()
+        rules.template = "photo"
+        XCTAssertEqual(problems(["/A/x.jpg", "/A/y.jpg", "/B/z.jpg"], rules), [.duplicate, .duplicate, nil])
+    }
+
+    func testDuplicatesIgnoreCase() {
+        var rules = RenameRules()
+        rules.find = "x"
+        rules.replace = "Y"
+        XCTAssertEqual(problems(["/A/x.txt", "/A/y.txt"], rules), [.duplicate, .duplicate])
+    }
+
+    func testNameOfAnItemOutsideTheBatchIsTaken() {
+        var rules = RenameRules()
+        rules.template = "{name} copy"
+        XCTAssertEqual(problems(["/A/x.txt"], rules, existing: ["/A/x copy.txt"]), [.taken])
+    }
+
+    func testSwapsAndCaseOnlyChangesAreAllowed() {
+        var rules = RenameRules()
+        rules.template = "{name}a"
+        // a → aa while aa → aaa: aa is in the batch, so it moves out of the way.
+        XCTAssertEqual(problems(["/A/a", "/A/aa"], rules), [nil, nil])
+        var upper = RenameRules()
+        upper.caseChange = .upper
+        let preview = BatchRename.preview(
+            [RenameSubject(url: URL(fileURLWithPath: "/A/a.txt"))], rules: upper,
+            exists: { $0.path.lowercased() == "/a/a.txt" }
+        )
+        XCTAssertEqual(preview.rows.map(\.newName), ["A.txt"])
+        XCTAssertEqual(preview.rows.map(\.problem), [nil])
+        XCTAssertTrue(preview.canRename)
+    }
+
+    func testInvalidNames() {
+        var rules = RenameRules()
+        rules.includesExtension = true
+        for template in ["", ".", "..", "a/b", "a:b"] {
+            rules.template = template
+            XCTAssertEqual(problems(["/A/x.txt"], rules), [.invalidName], template)
+        }
+    }
+
+    func testNothingToDoMeansNothingToRename() {
+        let preview = BatchRename.preview(
+            [RenameSubject(url: URL(fileURLWithPath: "/A/x.txt"))], rules: RenameRules(), exists: { _ in true }
+        )
+        XCTAssertEqual(preview.rows.map(\.problem), [nil])
+        XCTAssertFalse(preview.canRename)
+    }
 }

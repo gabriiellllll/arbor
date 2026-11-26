@@ -75,7 +75,7 @@ public enum BatchRename {
     /// The new name of each subject, in order. `exists` tells whether an item is at a URL.
     public static func preview(
         _ subjects: [RenameSubject], rules: RenameRules,
-        exists _: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }
+        exists: (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }
     ) -> RenamePreview {
         var regex: NSRegularExpression?
         if rules.usesRegex, !rules.find.isEmpty {
@@ -98,7 +98,34 @@ public enum BatchRename {
             )
             return RenamePreview.Row(source: subject.url, newName: name, problem: missingDate ? .noPhotoDate : nil)
         }
-        return RenamePreview(rows: rows)
+        return RenamePreview(rows: collisions(in: rows, exists: exists))
+    }
+
+    // ponytail: names compare ignoring case, as on default APFS; a case-sensitive volume
+    // could take `a` and `A`, but they are flagged as duplicates.
+    /// Flags invalid names, names given twice in a folder, and names of items outside the batch.
+    static func collisions(in rows: [RenamePreview.Row], exists: (URL) -> Bool) -> [RenamePreview.Row] {
+        func key(_ url: URL) -> String {
+            url.standardizedFileURL.path.lowercased()
+        }
+        let sources = Set(rows.map { key($0.source) })
+        let destinations = rows.map { key($0.source.deletingLastPathComponent().appendingPathComponent($0.newName)) }
+        let counts = destinations.reduce(into: [:]) { $0[$1, default: 0] += 1 }
+        return rows.enumerated().map { index, row in
+            var row = row
+            let name = row.newName
+            let destination = row.source.deletingLastPathComponent().appendingPathComponent(name)
+            if row.problem != nil {
+                return row
+            } else if name.isEmpty || name == "." || name == ".." || name.contains("/") || name.contains(":") {
+                row.problem = .invalidName
+            } else if counts[destinations[index], default: 0] > 1 {
+                row.problem = .duplicate
+            } else if row.changes, exists(destination), !sources.contains(key(destination)) {
+                row.problem = .taken
+            }
+            return row
+        }
     }
 
     static func newName(
